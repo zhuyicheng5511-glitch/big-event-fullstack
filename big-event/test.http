@@ -1,0 +1,129 @@
+### 测试注册接口 - 成功注册
+POST http://localhost:8080/user/register
+Content-Type: application/x-www-form-urlencoded
+
+username=testuser1&password=123456
+
+### 测试注册接口 - 用户名已占用
+POST http://localhost:8080/user/register
+Content-Type: application/x-www-form-urlencoded
+
+username=testuser1&password=123456
+
+### 测试登录接口 - 成功登录
+POST http://localhost:8080/user/login
+Content-Type: application/x-www-form-urlencoded
+
+username=testuser1&password=123456
+
+### 测试登录接口 - 密码错误
+POST http://localhost:8080/user/login
+Content-Type: application/x-www-form-urlencoded
+
+username=testuser1&password=abcdefg
+
+### 1. 不戴手环（不带 Token）访问受保护接口
+GET http://localhost:8080/user/userInfo
+
+### 2. 戴上手环（带上有效 Token）访问受保护接口
+# 注意：下面的 Authorization 后面先写一个空格，然后把您上面登录成功拿到的真实 Token 粘贴在后面
+GET http://localhost:8080/user/userInfo
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDY0Mzc1NX0.8VqFIi1vXj8CKtTpYWjBdms19AZURqTiSwMVJDzwKtY
+
+### 1. 新增分类 (需要带上有效的 Authorization Token 头部)
+POST http://localhost:8080/category
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDY0MDg4OH0.HoybfYWLlAVYXYHZmYLegc6u_oMJk45WbV1wepW2dPw
+Content-Type: application/json
+
+{
+  "categoryName": "篮球",
+  "categoryAlias": "lanqiu"
+}
+
+### 2. 获取分类列表
+GET http://localhost:8080/category
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDY0MDg4OH0.HoybfYWLlAVYXYHZmYLegc6u_oMJk45WbV1wepW2dPw
+
+### 3. 获取分类详情 (这里的 id 替换成列表中查出来的真实分类 id)
+GET http://localhost:8080/category/detail?id=1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDU1NjQ0NX0.2-RHd4mbxH_WgNXGG4j3UhbMdf72Xq3lwHnBPJ0cT3I
+
+### 4. 修改分类 (这里的 id 替换成真实的分类 id)
+PUT http://localhost:8080/category
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDU1NjQ0NX0.2-RHd4mbxH_WgNXGG4j3UhbMdf72Xq3lwHnBPJ0cT3I
+Content-Type: application/json
+
+{
+  "id": 1,
+  "categoryName": "NBA篮球",
+  "categoryAlias": "nba"
+}
+
+### 5. 删除分类 (这里的 id 替换成真实的分类 id)
+DELETE http://localhost:8080/category?id=1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDU1NjQ0NX0.2-RHd4mbxH_WgNXGG4j3UhbMdf72Xq3lwHnBPJ0cT3I
+
+### 测试文件上传接口
+POST http://localhost:8080/upload
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDYzOTQ2M30.KWl6XnYbcnbfMK3YtFJv7X9hcNzxXwk2Xr20Yri1xdM
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="test.jpg"
+Content-Type: image/jpeg
+
+< ./test.jpg
+--WebAppBoundary--
+
+### 1. 发布第一篇文章 (注意：categoryId 填写您数据库里真实存在的分类ID，coverImg 填写您刚才上传成功拿到的图片URL)
+POST http://localhost:8080/article
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDY0MDg4OH0.HoybfYWLlAVYXYHZmYLegc6u_oMJk45WbV1wepW2dPw
+Content-Type: application/json
+
+{
+  "title": "医药反腐绝非砍医护收入",
+  "content": "日本排海的核污水自称比自来水都干净???那么多日本人,请喝光它...",
+  "coverImg": "http://localhost:8080/uploads/d71a27b7-ffe0-4228-ace9-a6f111550de3.jpg",
+  "state": "已发布",
+  "categoryId": 2
+}
+
+### 2. 发布第二篇文章 (草稿状态)
+POST http://localhost:8080/article
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDY0MDg4OH0.HoybfYWLlAVYXYHZmYLegc6u_oMJk45WbV1wepW2dPw
+Content-Type: application/json
+
+{
+  "title": "华山景区已受大风影响阵风达7-8级",
+  "content": "未来24小时内将持续...",
+  "coverImg": "http://localhost:8080/uploads/d71a27b7-ffe0-4228-ace9-a6f111550de3.jpg",
+  "state": "草稿",
+  "categoryId": 2
+}
+
+### 3. 分页查询全部文章列表 (查第 1 页，每页展示 5 条)
+GET http://localhost:8080/article?pageNum=1&pageSize=5
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDY0MDg4OH0.HoybfYWLlAVYXYHZmYLegc6u_oMJk45WbV1wepW2dPw
+
+### 4. 条件筛选查询 (只查分类ID为1，且状态为\"草稿\"的文章)
+GET http://localhost:8080/article?pageNum=1&pageSize=5&categoryId=2&state=草稿
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDgyNzM3M30.qqtbuTd-QZfZy9lrqjx8YtqZNo-Pyp2Sv61saIWq97A
+
+###
+POST http://localhost:8080/user/register
+Content-Type: application/x-www-form-urlencoded
+
+username=123&password=123456
+
+###
+POST http://localhost:8080/article
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDgyNzM3M30.qqtbuTd-QZfZy9lrqjx8YtqZNo-Pyp2Sv61saIWq97A
+Content-Type: application/json
+
+{
+  "title": "测试文章",
+  "content": "测试内容",
+  "coverImg": "http://localhost:8080/uploads/d71a27b7.jpg",
+  "state": "已发布",
+  "categoryId": 9999
+}

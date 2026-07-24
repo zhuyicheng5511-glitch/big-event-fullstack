@@ -1,0 +1,16 @@
+# 忽略后端的临时编译目录
+**/target/
+**/.idea/
+**/*.iml
+**/.mvn/
+**/mvnw
+**/mvnw.cmd
+
+# 忽略前端的第三方依赖包
+**/node_modules/
+**/dist/
+**/.local
+
+# 忽略本地上传的图片文件夹（不污染远程仓库）
+**/uploads/
+.DS_Store
