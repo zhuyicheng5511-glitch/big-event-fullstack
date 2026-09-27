@@ -16,6 +16,8 @@ export const articleUpdateService = (articleData) => {
 }
 
 // 4. 删除文章
+// 注意：后端接口是 @DeleteMapping("/{id}")，路径参数形式，必须写成 /article/3
+//       不能写成 /article?id=3（那会匹配不到任何处理方法，报「服务器繁忙」）
 export const articleDeleteService = (id) => {
-    return request.delete(`/article?id=${id}`)
+    return request.delete(`/article/${id}`)
 }

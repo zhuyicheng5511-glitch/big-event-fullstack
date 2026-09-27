@@ -45,14 +45,19 @@ public class ArticleController {
     // 3. 修改文章
     @PutMapping
     public Result update(@RequestBody @Validated Article article) {
-        articleService.update(article);
+        // 受影响行数为 0，说明该文章不存在，或不属于当前登录用户
+        if (articleService.update(article) == 0) {
+            return Result.error("文章不存在，或您无权操作该文章");
+        }
         return Result.success();
     }
 
     // 4. 删除文章
     @DeleteMapping("/{id}")
     public Result deleteById(@PathVariable Integer id) {
-        articleService.deleteById(id);
+        if (articleService.deleteById(id) == 0) {
+            return Result.error("文章不存在，或您无权操作该文章");
+        }
         return Result.success();
     }
 }

@@ -47,12 +47,20 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
-    public void update(Article article) {
-        articleMapper.update(article);
+    public int update(Article article) {
+        // 强制用当前登录用户的 id 覆盖前端传来的 createUser，
+        // 否则攻击者可以在请求体里伪造 createUser 绕过归属校验
+        Map<String, Object> claims = ThreadLocalUtil.get();
+        Integer userId = (Integer) claims.get("id");
+        article.setCreateUser(userId);
+
+        return articleMapper.update(article);
     }
 
     @Override
-    public void deleteById(Integer id) {
-        articleMapper.deleteById(id);
+    public int deleteById(Integer id) {
+        Map<String, Object> claims = ThreadLocalUtil.get();
+        Integer userId = (Integer) claims.get("id");
+        return articleMapper.deleteById(id, userId);
     }
 }

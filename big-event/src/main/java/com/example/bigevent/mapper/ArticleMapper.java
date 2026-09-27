@@ -22,11 +22,18 @@ public interface ArticleMapper {
             "   <if test='state != null'> and state = #{state} </if> " +
             "</where>" +
             "</script>")
-    List<Article> list(Integer userId, Integer categoryId, String state);
+    List<Article> list(@Param("userId") Integer userId,
+                       @Param("categoryId") Integer categoryId,
+                       @Param("state") String state);
 
-    @Update("update article set title=#{title}, content=#{content}, cover_img=#{coverImg}, state=#{state}, category_id=#{categoryId}, update_time=now() where id=#{id}")
-    void update(Article article);
+    // 3. 修改文章
+    //    where 中必须带上 create_user：否则任何登录用户都能改别人的文章（横向越权）
+    //    createUser 由 Service 从 ThreadLocal 取出后强制覆盖，绝不信任前端传入的值
+    @Update("update article set title=#{title}, content=#{content}, cover_img=#{coverImg}, state=#{state}, category_id=#{categoryId}, update_time=now() " +
+            "where id=#{id} and create_user=#{createUser}")
+    int update(Article article);
 
-    @Delete("delete from article where id=#{id}")
-    void deleteById(Integer id);
+    // 4. 删除文章（同样必须限定 create_user，否则能删掉别人的文章）
+    @Delete("delete from article where id=#{id} and create_user=#{userId}")
+    int deleteById(@Param("id") Integer id, @Param("userId") Integer userId);
 }
