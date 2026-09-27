@@ -1,71 +1,141 @@
-### 测试注册接口 - 成功注册
-POST http://localhost:8080/user/register
+# ============================================================================
+#  大事件（big-event）接口测试文件 —— IntelliJ IDEA HTTP Client
+# ============================================================================
+#  使用方式：
+#    1. 用 IDEA 打开本文件（放在 big-event/ 目录下）
+#    2. 启动后端（默认 8080）
+#    3. 从上到下依次点击每个请求左侧的 ▶ 运行
+#       需要先点「测试登录接口」，它会把 token 自动存入全局变量，
+#       后续所有请求通过 {{token}} 复用，无需手动粘贴
+#
+#  本文件不包含任何硬编码 token：
+#    token / categoryId / articleId / coverUrl 全部由响应处理脚本自动捕获
+#
+#  账号说明：下面用的是本地开发库里的测试账号，仅用于本机联调。
+#           如果你的账号不同，改这里的两行即可。
+# ============================================================================
+
+@host = http://localhost:8080
+@username = paulgeorge8
+@password = asdfgh
+
+
+# ============================================================================
+#  一、认证
+# ============================================================================
+
+### 测试登录接口（成功后自动把 token 存入全局变量 {{token}}）
+POST {{host}}/user/login
 Content-Type: application/x-www-form-urlencoded
 
-username=testuser1&password=123456
+username={{username}}&password={{password}}
+
+> {%
+    client.test("登录成功", function () {
+        client.assert(response.body.code === 0, "登录失败：" + response.body.message);
+    });
+    client.global.set("token", response.body.data);
+%}
+
+
+### 测试注册接口 - 成功注册（用户名可自行换成未占用的）
+POST {{host}}/user/register
+Content-Type: application/x-www-form-urlencoded
+
+username=zhuyc2026&password=123456
+
 
 ### 测试注册接口 - 用户名已占用
-POST http://localhost:8080/user/register
+POST {{host}}/user/register
 Content-Type: application/x-www-form-urlencoded
 
-username=testuser1&password=123456
+username={{username}}&password=123456
 
-### 测试登录接口 - 成功登录
-POST http://localhost:8080/user/login
+
+### 测试注册接口 - 用户名过短（预期触发 @Pattern 校验失败）
+POST {{host}}/user/register
 Content-Type: application/x-www-form-urlencoded
 
-username=testuser1&password=123456
+username=123&password=123456
 
-### 测试登录接口 - 密码错误
-POST http://localhost:8080/user/login
+
+### 测试登录接口 - 密码错误（预期提示「密码错误」）
+POST {{host}}/user/login
 Content-Type: application/x-www-form-urlencoded
 
-username=testuser1&password=abcdefg
+username={{username}}&password=wrongpwd
 
-### 1. 不戴手环（不带 Token）访问受保护接口
-GET http://localhost:8080/user/userInfo
 
-### 2. 戴上手环（带上有效 Token）访问受保护接口
-# 注意：下面的 Authorization 后面先写一个空格，然后把您上面登录成功拿到的真实 Token 粘贴在后面
-GET http://localhost:8080/user/userInfo
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDY0Mzc1NX0.8VqFIi1vXj8CKtTpYWjBdms19AZURqTiSwMVJDzwKtY
+### 鉴权 - 不带 Token 访问受保护接口（预期 HTTP 401）
+GET {{host}}/user/userInfo
 
-### 1. 新增分类 (需要带上有效的 Authorization Token 头部)
-POST http://localhost:8080/category
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDY0MDg4OH0.HoybfYWLlAVYXYHZmYLegc6u_oMJk45WbV1wepW2dPw
+
+### 鉴权 - 带上 Token 访问受保护接口（预期返回当前用户信息，且不含 password 字段）
+GET {{host}}/user/userInfo
+Authorization: {{token}}
+
+
+# ============================================================================
+#  二、文章分类
+# ============================================================================
+
+### 新增分类
+POST {{host}}/category
+Authorization: {{token}}
 Content-Type: application/json
 
 {
-  "categoryName": "篮球",
-  "categoryAlias": "lanqiu"
+  "categoryName": "示例分类",
+  "categoryAlias": "demo"
 }
 
-### 2. 获取分类列表
-GET http://localhost:8080/category
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDY0MDg4OH0.HoybfYWLlAVYXYHZmYLegc6u_oMJk45WbV1wepW2dPw
 
-### 3. 获取分类详情 (这里的 id 替换成列表中查出来的真实分类 id)
-GET http://localhost:8080/category/detail?id=1
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDU1NjQ0NX0.2-RHd4mbxH_WgNXGG4j3UhbMdf72Xq3lwHnBPJ0cT3I
+### 获取分类列表（自动把第一个分类的 id 存入变量 {{categoryId}}）
+GET {{host}}/category
+Authorization: {{token}}
 
-### 4. 修改分类 (这里的 id 替换成真实的分类 id)
-PUT http://localhost:8080/category
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDU1NjQ0NX0.2-RHd4mbxH_WgNXGG4j3UhbMdf72Xq3lwHnBPJ0cT3I
+> {%
+    var items = response.body.data;
+    if (items && items.length > 0) {
+        client.global.set("categoryId", items[0].id);
+    }
+%}
+
+
+### 获取分类详情（只能查自己创建的分类，查他人分类会被拒绝）
+GET {{host}}/category/detail?id={{categoryId}}
+Authorization: {{token}}
+
+
+### 修改分类
+PUT {{host}}/category
+Authorization: {{token}}
 Content-Type: application/json
 
 {
-  "id": 1,
-  "categoryName": "NBA篮球",
-  "categoryAlias": "nba"
+  "id": {{categoryId}},
+  "categoryName": "示例分类改",
+  "categoryAlias": "demo2"
 }
 
-### 5. 删除分类 (这里的 id 替换成真实的分类 id)
-DELETE http://localhost:8080/category?id=1
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDU1NjQ0NX0.2-RHd4mbxH_WgNXGG4j3UhbMdf72Xq3lwHnBPJ0cT3I
 
-### 测试文件上传接口
-POST http://localhost:8080/upload
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDYzOTQ2M30.KWl6XnYbcnbfMK3YtFJv7X9hcNzxXwk2Xr20Yri1xdM
+### 删除被文章引用的分类（预期提示「该分类下已存在文章，无法删除」）
+DELETE {{host}}/category?id={{categoryId}}
+Authorization: {{token}}
+
+
+### 删除未被引用的分类（先新建一个空分类再删，预期「操作成功」）
+DELETE {{host}}/category?id={{categoryId}}
+Authorization: {{token}}
+
+
+# ============================================================================
+#  三、文件上传
+# ============================================================================
+
+### 上传封面图（自动把返回的图片 URL 存入变量 {{coverUrl}}）
+POST {{host}}/upload
+Authorization: {{token}}
 Content-Type: multipart/form-data; boundary=WebAppBoundary
 
 --WebAppBoundary
@@ -75,55 +145,147 @@ Content-Type: image/jpeg
 < ./test.jpg
 --WebAppBoundary--
 
-### 1. 发布第一篇文章 (注意：categoryId 填写您数据库里真实存在的分类ID，coverImg 填写您刚才上传成功拿到的图片URL)
-POST http://localhost:8080/article
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDY0MDg4OH0.HoybfYWLlAVYXYHZmYLegc6u_oMJk45WbV1wepW2dPw
+> {%
+    client.global.set("coverUrl", response.body.data);
+%}
+
+
+### 上传 - 不带 Token（预期 HTTP 401）
+POST {{host}}/upload
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="test.jpg"
+Content-Type: image/jpeg
+
+< ./test.jpg
+--WebAppBoundary--
+
+
+# ============================================================================
+#  四、文章
+# ============================================================================
+
+### 发布文章 - 已发布（coverImg 用上一步上传得到的 {{coverUrl}}）
+POST {{host}}/article
+Authorization: {{token}}
 Content-Type: application/json
 
 {
-  "title": "医药反腐绝非砍医护收入",
-  "content": "日本排海的核污水自称比自来水都干净???那么多日本人,请喝光它...",
-  "coverImg": "http://localhost:8080/uploads/d71a27b7-ffe0-4228-ace9-a6f111550de3.jpg",
+  "title": "示例文章-已发布",
+  "content": "这是用于接口联调的示例内容，可自行修改。",
+  "coverImg": "{{coverUrl}}",
   "state": "已发布",
-  "categoryId": 2
+  "categoryId": {{categoryId}}
 }
 
-### 2. 发布第二篇文章 (草稿状态)
-POST http://localhost:8080/article
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDY0MDg4OH0.HoybfYWLlAVYXYHZmYLegc6u_oMJk45WbV1wepW2dPw
+
+### 发布文章 - 草稿
+POST {{host}}/article
+Authorization: {{token}}
 Content-Type: application/json
 
 {
-  "title": "华山景区已受大风影响阵风达7-8级",
-  "content": "未来24小时内将持续...",
-  "coverImg": "http://localhost:8080/uploads/d71a27b7-ffe0-4228-ace9-a6f111550de3.jpg",
+  "title": "示例文章-草稿",
+  "content": "草稿状态的示例内容。",
+  "coverImg": "{{coverUrl}}",
   "state": "草稿",
-  "categoryId": 2
+  "categoryId": {{categoryId}}
 }
 
-### 3. 分页查询全部文章列表 (查第 1 页，每页展示 5 条)
-GET http://localhost:8080/article?pageNum=1&pageSize=5
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDY0MDg4OH0.HoybfYWLlAVYXYHZmYLegc6u_oMJk45WbV1wepW2dPw
 
-### 4. 条件筛选查询 (只查分类ID为1，且状态为\"草稿\"的文章)
-GET http://localhost:8080/article?pageNum=1&pageSize=5&categoryId=2&state=草稿
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDgyNzM3M30.qqtbuTd-QZfZy9lrqjx8YtqZNo-Pyp2Sv61saIWq97A
+### 分页查询（自动把第一条的 id 存入变量 {{articleId}}，供下面的修改/删除使用）
+GET {{host}}/article?pageNum=1&pageSize=5
+Authorization: {{token}}
 
-###
-POST http://localhost:8080/user/register
-Content-Type: application/x-www-form-urlencoded
+> {%
+    var items = response.body.data.items;
+    if (items && items.length > 0) {
+        client.global.set("articleId", items[0].id);
+    }
+%}
 
-username=123&password=123456
 
-###
-POST http://localhost:8080/article
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFpbXMiOnsiaWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIxIn0sImV4cCI6MTc4NDgyNzM3M30.qqtbuTd-QZfZy9lrqjx8YtqZNo-Pyp2Sv61saIWq97A
+### 条件筛选查询（分类 + 状态，两个条件同时生效）
+GET {{host}}/article?pageNum=1&pageSize=5&categoryId={{categoryId}}&state=草稿
+Authorization: {{token}}
+
+
+### 修改文章（注意 where 条件含 create_user，只能改自己的文章）
+PUT {{host}}/article
+Authorization: {{token}}
 Content-Type: application/json
 
 {
-  "title": "测试文章",
-  "content": "测试内容",
-  "coverImg": "http://localhost:8080/uploads/d71a27b7.jpg",
+  "id": {{articleId}},
+  "title": "示例文章-已修改",
+  "content": "修改后的内容。",
+  "coverImg": "{{coverUrl}}",
+  "state": "已发布",
+  "categoryId": {{categoryId}}
+}
+
+
+### 删除文章（修复后的正确路径：/article/{id}）
+DELETE {{host}}/article/{{articleId}}
+Authorization: {{token}}
+
+
+# ============================================================================
+#  五、边界与异常（用于观察全局异常处理的行为）
+# ============================================================================
+
+### 引用不存在的分类（预期应提示「分类不存在」，当前实现会外键报错）
+POST {{host}}/article
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "title": "引用不存在的分类",
+  "content": "边界测试",
+  "coverImg": "{{coverUrl}}",
   "state": "已发布",
   "categoryId": 9999
 }
+
+
+### 分页参数缺失（预期应有默认值，当前实现返回「服务器繁忙」）
+GET {{host}}/article
+Authorization: {{token}}
+
+
+### 分页参数非法（预期应校验失败，当前实现返回「操作成功」+ 空列表）
+GET {{host}}/article?pageNum=0&pageSize=-1
+Authorization: {{token}}
+
+
+### 错误路径 - 用查询参数代替路径参数（预期 404，当前返回 HTTP 200 +「服务器繁忙」）
+DELETE {{host}}/article?id=999999
+Authorization: {{token}}
+
+
+# ============================================================================
+#  六、越权检查（完整版见 TEST-CHECKLIST.md 附录 A）
+# ============================================================================
+#  做法：用另一个账号登录拿到 {{token2}}，再用它去访问 testuser1 的数据。
+#  修复后预期：读/改/删他人分类与文章全部被拒绝。
+
+### 用第二个账号登录（自动把 token 存入 {{token2}}）
+POST {{host}}/user/login
+Content-Type: application/x-www-form-urlencoded
+
+username=testuser1&password=在这里填另一个账号的密码
+
+> {%
+    client.global.set("token2", response.body.data);
+%}
+
+
+### 越权 - 读他人分类（预期：分类不存在，或您无权访问该分类）
+GET {{host}}/category/detail?id=2
+Authorization: {{token2}}
+
+
+### 越权 - 删除他人文章（预期：文章不存在，或您无权操作该文章）
+DELETE {{host}}/article/3
+Authorization: {{token2}}
