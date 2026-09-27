@@ -1,9 +1,10 @@
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/big_event?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=utf-8
-    username: root
-    password: 123456
+    url: jdbc:mysql://localhost:3306/hoops?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=utf-8
+    # 数据库账号密码支持用环境变量覆盖，避免把生产凭据提交进仓库
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
 
   servlet:
     multipart:
@@ -12,11 +13,27 @@ spring:
 
   data:
     redis:
-      host: localhost
-      port: 6379
-      password: # 如果您的本地 Redis 没有设置密码，这里留空即可
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}   # 本地 Redis 未设密码则留空
 
 mybatis:
   configuration:
     map-underscore-to-camel-case: true
 
+# ============================================================================
+# JWT 配置
+# ============================================================================
+# secret：
+#   HS256 要求密钥至少 256 bit（32 字节），应用启动时会校验长度，不足则启动失败。
+#   下面这串是【开发用默认值】，生产环境必须通过环境变量 JWT_SECRET 覆盖：
+#       set JWT_SECRET=你的密钥          (Windows)
+#       export JWT_SECRET=你的密钥       (Linux / macOS)
+#   不要在生产环境使用仓库里的这个默认值。
+#
+# expire-hours：
+#   token 有效期。JWT 的 exp 与 Redis 中会话记录的 TTL 共用这一个配置，
+#   避免两处各自硬编码导致「JWT 还有效但 Redis 已过期」的不一致问题。
+jwt:
+  secret: ${JWT_SECRET:8a718c39caf4269da4f1df1fec54ee81473fefc8cbb81de946889af467b92dfb}
+  expire-hours: 12

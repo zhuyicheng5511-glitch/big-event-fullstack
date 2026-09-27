@@ -8,11 +8,11 @@
         <version>4.0.7</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>com.example</groupId>
-    <artifactId>big-event</artifactId>
+    <groupId>com.zhuyicheng</groupId>
+    <artifactId>hoops</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>big-event</name>
-    <description>big-event</description>
+    <name>hoops</name>
+    <description>篮球数据统计平台 - 后端服务</description>
     <url/>
     <licenses>
         <license/>
@@ -35,6 +35,14 @@
             <groupId>com.auth0</groupId>
             <artifactId>java-jwt</artifactId>
             <version>4.4.0</version>
+        </dependency>
+        <!--
+            密码加密：只引入 spring-security-crypto（提供 BCryptPasswordEncoder），
+            不引入 spring-boot-starter-security，避免它的自动配置改变现有接口的鉴权行为。
+        -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
