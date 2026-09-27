@@ -104,13 +104,19 @@
 
 \### 2. 后端启动 (`big-event`)
 
-1\.  在 MySQL 中新建数据库，并执行根目录下的建表脚本：
+1\.  执行项目内置的建表脚本（会自动创建 `big\_event` 数据库及 `user`、`category`、`article` 三张表）：
 
-&#x20;   ```sql
+&#x20;   ```bash
 
-&#x20;   CREATE DATABASE IF NOT EXISTS big\_event CHARACTER SET utf8mb4;
+&#x20;   mysql -uroot -p < big-event/src/main/resources/db/schema.sql
 
 &#x20;   ```
+
+&#x20;   也可以在 Navicat / IDEA 的 Database 工具中打开该文件直接执行。
+
+&#x20;   脚本位置：`big-event/src/main/resources/db/schema.sql`
+
+&#x20;   ⚠️ 注意：脚本开头包含 `DROP TABLE` 语句，重复执行会**清空这三张表的全部数据**，请仅在全新的空库上执行；若库中已有数据，请先备份（`mysqldump -uroot -p --databases big\_event > backup.sql`）。
 
 2\.  打开 `big-event/src/main/resources/application.yml`，修改您的 MySQL 密码。
 
