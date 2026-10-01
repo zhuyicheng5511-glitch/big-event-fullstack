@@ -5,7 +5,11 @@ import ArticleCategoryVue from '@/views/ArticleCategory.vue'
 import ArticleManageVue from '@/views/ArticleManage.vue'
 import UserAvatarVue from '@/views/UserAvatar.vue'
 import UserPasswordVue from '@/views/UserPassword.vue'
-import UserInfoVue from '@/views/UserInfo.vue' // 1. 引入基本资料组件
+import UserInfoVue from '@/views/UserInfo.vue'
+import SeasonVue from '@/views/Season.vue'
+import TeamVue from '@/views/Team.vue'
+import PlayerVue from '@/views/Player.vue'
+import GameVue from '@/views/Game.vue'
 
 // 引入 Pinia 的用户仓库
 import { useUserStore } from '@/stores/user'
@@ -17,13 +21,17 @@ const router = createRouter({
     {
       path: '/',
       component: LayoutVue,
-      redirect: '/article/manage',
+      redirect: '/team',
       children: [
+        { path: '/team', component: TeamVue },
+        { path: '/player', component: PlayerVue },
+        { path: '/season', component: SeasonVue },
+        { path: '/game', component: GameVue },
         { path: '/article/category', component: ArticleCategoryVue },
         { path: '/article/manage', component: ArticleManageVue },
         { path: '/user/avatar', component: UserAvatarVue },
         { path: '/user/password', component: UserPasswordVue },
-        { path: '/user/info', component: UserInfoVue } // 2. 注册基本资料子路由
+        { path: '/user/info', component: UserInfoVue }
       ]
     }
   ]
