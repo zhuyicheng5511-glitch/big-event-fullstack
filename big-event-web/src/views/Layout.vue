@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted } from 'vue'
-import { Management, Promotion, UserFilled, User, Crop, EditPen, SwitchButton, CaretBottom } from '@element-plus/icons-vue'
+import { Basketball, User, Calendar, Timer, Reading, UserFilled, Crop, EditPen, SwitchButton, CaretBottom } from '@element-plus/icons-vue'
 import { userGetInfoService } from '@/api/user'
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
@@ -53,15 +53,30 @@ const handleCommand = (command) => {
       <div class="el-aside__logo"></div>
       <!-- default-active 设置默认激活项 -->
       <el-menu active-text-color="#ffd04b" background-color="#232323" text-color="#fff" router>
-        <el-menu-item index="/article/category">
-          <el-icon><Management /></el-icon>
-          <span>文章分类</span>
+        <el-menu-item index="/team">
+          <el-icon><Basketball /></el-icon>
+          <span>球队</span>
         </el-menu-item>
-        <el-menu-item index="/article/manage">
-          <el-icon><Promotion /></el-icon>
-          <span>文章管理</span>
+        <el-menu-item index="/player">
+          <el-icon><User /></el-icon>
+          <span>球员</span>
         </el-menu-item>
-        <!-- 二级菜单 -->
+        <el-menu-item index="/season">
+          <el-icon><Calendar /></el-icon>
+          <span>赛季</span>
+        </el-menu-item>
+        <el-menu-item index="/game">
+          <el-icon><Timer /></el-icon>
+          <span>比赛</span>
+        </el-menu-item>
+        <el-sub-menu index="/article">
+          <template #title>
+            <el-icon><Reading /></el-icon>
+            <span>资讯</span>
+          </template>
+          <el-menu-item index="/article/category">资讯分类</el-menu-item>
+          <el-menu-item index="/article/manage">资讯文章</el-menu-item>
+        </el-sub-menu>
         <el-sub-menu index="/user">
           <template #title>
             <el-icon><UserFilled /></el-icon>
@@ -107,7 +122,7 @@ const handleCommand = (command) => {
       </el-main>
 
       <!-- 底部声明 -->
-      <el-footer>大事件 ©2026 Created by 厦门理工学院2024级软件3班朱毅城</el-footer>
+      <el-footer>Hoops 篮球数据平台 ©2026 Created by 厦门理工学院2024级软件3班朱毅城</el-footer>
     </el-container>
   </el-container>
 </template>
