@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PushbackInputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -75,7 +77,7 @@ public class ImportServiceImpl implements ImportService {
             if (missing(name, "name", record, errors)) return;
             if (duplicate(name, seen, "name", record, errors)) return;
             if (existingNames.contains(name)) {
-                errors.add(new ImportError((int) record.getRecordNumber(), "name", "球队名已存在: " + name));
+                errors.add(new ImportError(lineNumber(record), "name", "球队名已存在: " + name));
                 return;
             }
             Team team = new Team();
@@ -105,7 +107,7 @@ public class ImportServiceImpl implements ImportService {
             if (missing(name, "name", record, errors)) return;
             if (duplicate(name, seen, "name", record, errors)) return;
             if (existingNames.contains(name)) {
-                errors.add(new ImportError((int) record.getRecordNumber(), "name", "赛季名已存在: " + name));
+                errors.add(new ImportError(lineNumber(record), "name", "赛季名已存在: " + name));
                 return;
             }
             Season season = new Season();
@@ -135,7 +137,7 @@ public class ImportServiceImpl implements ImportService {
             if (missing(name, "name", record, errors)) return;
             if (duplicate(name, seen, "name", record, errors)) return;
             if (existingNames.contains(name)) {
-                errors.add(new ImportError((int) record.getRecordNumber(), "name", "球员名已存在: " + name));
+                errors.add(new ImportError(lineNumber(record), "name", "球员名已存在: " + name));
                 return;
             }
             String teamName = value(record, "team");
@@ -194,7 +196,7 @@ public class ImportServiceImpl implements ImportService {
             String key = dateStr + "_" + home + "_" + away;
             if (duplicate(key, seen, "home_team/away_team/date", record, errors)) return;
             if (existingKeys.contains(key)) {
-                errors.add(new ImportError((int) record.getRecordNumber(), "home_team/away_team/date", "比赛已存在: " + key));
+                errors.add(new ImportError(lineNumber(record), "home_team/away_team/date", "比赛已存在: " + key));
                 return;
             }
 
@@ -244,7 +246,7 @@ public class ImportServiceImpl implements ImportService {
             String key = gameId + "_" + playerId;
             if (duplicate(key, seen, "game_key/player", record, errors)) return;
             if (existingKeys.contains(key)) {
-                errors.add(new ImportError((int) record.getRecordNumber(), "game_key/player", "该球员本场比赛数据已存在: " + key));
+                errors.add(new ImportError(lineNumber(record), "game_key/player", "该球员本场比赛数据已存在: " + key));
                 return;
             }
 
@@ -363,7 +365,9 @@ public class ImportServiceImpl implements ImportService {
                 .setSkipHeaderRecord(true)
                 .setTrim(true)
                 .build();
-        try (CSVParser parser = new CSVParser(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8), format)) {
+        try (InputStream raw = file.getInputStream();
+             InputStream in = skipBom(raw);
+             CSVParser parser = new CSVParser(new InputStreamReader(in, StandardCharsets.UTF_8), format)) {
             for (CSVRecord record : parser) {
                 consumer.accept(record);
             }
@@ -372,13 +376,38 @@ public class ImportServiceImpl implements ImportService {
         }
     }
 
+    /**
+     * 跳过 UTF-8 BOM（EF BB BF）。
+     * Excel 与 Windows 记事本导出的 CSV 默认带 BOM，不处理会导致表头第一个列名
+     * 变成 "﻿name"，进而让所有行的第一列都被误判为「字段不能为空」。
+     */
+    private InputStream skipBom(InputStream in) throws IOException {
+        PushbackInputStream pushback = new PushbackInputStream(in, 3);
+        byte[] bom = new byte[3];
+        int read = pushback.read(bom, 0, 3);
+        boolean isBom = read == 3
+                && (bom[0] & 0xFF) == 0xEF
+                && (bom[1] & 0xFF) == 0xBB
+                && (bom[2] & 0xFF) == 0xBF;
+        if (!isBom && read > 0) {
+            pushback.unread(bom, 0, read);   // 不是 BOM 就还回去，避免吃掉正常内容
+        }
+        return pushback;
+    }
+
+    /** CSV 文件中的物理行号：表头为第 1 行，首条数据为第 2 行。
+     *  commons-csv 在 skipHeaderRecord 模式下数据行从 1 开始计数，故统一 +1。 */
+    private int lineNumber(CSVRecord record) {
+        return (int) record.getRecordNumber() + 1;
+    }
+
     private String value(CSVRecord record, String header) {
         return record.isMapped(header) ? record.get(header) : null;
     }
 
     private boolean missing(String value, String field, CSVRecord record, List<ImportError> errors) {
         if (value == null || value.isBlank()) {
-            errors.add(new ImportError((int) record.getRecordNumber(), field, "字段不能为空"));
+            errors.add(new ImportError(lineNumber(record), field, "字段不能为空"));
             return true;
         }
         return false;
@@ -386,7 +415,7 @@ public class ImportServiceImpl implements ImportService {
 
     private boolean duplicate(String value, Set<String> seen, String field, CSVRecord record, List<ImportError> errors) {
         if (seen.contains(value)) {
-            errors.add(new ImportError((int) record.getRecordNumber(), field, "文件内重复: " + value));
+            errors.add(new ImportError(lineNumber(record), field, "文件内重复: " + value));
             return true;
         }
         return false;
@@ -396,7 +425,7 @@ public class ImportServiceImpl implements ImportService {
         if (value == null || value.isBlank()) return null;
         Integer id = map.get(value.trim());
         if (id == null) {
-            errors.add(new ImportError((int) record.getRecordNumber(), field, "不存在: " + value));
+            errors.add(new ImportError(lineNumber(record), field, "不存在: " + value));
         }
         return id;
     }
@@ -406,7 +435,7 @@ public class ImportServiceImpl implements ImportService {
         try {
             return Integer.parseInt(value.trim());
         } catch (NumberFormatException e) {
-            errors.add(new ImportError((int) record.getRecordNumber(), field, "必须是整数: " + value));
+            errors.add(new ImportError(lineNumber(record), field, "必须是整数: " + value));
             return null;
         }
     }
@@ -415,7 +444,7 @@ public class ImportServiceImpl implements ImportService {
         Integer v = parseInt(value, field, record, errors);
         if (v == null) return null;
         if (v != 0 && v != 1) {
-            errors.add(new ImportError((int) record.getRecordNumber(), field, "只能是 0 或 1: " + value));
+            errors.add(new ImportError(lineNumber(record), field, "只能是 0 或 1: " + value));
             return null;
         }
         return v;
@@ -426,7 +455,7 @@ public class ImportServiceImpl implements ImportService {
         try {
             return new BigDecimal(value.trim());
         } catch (NumberFormatException e) {
-            errors.add(new ImportError((int) record.getRecordNumber(), field, "必须是数字: " + value));
+            errors.add(new ImportError(lineNumber(record), field, "必须是数字: " + value));
             return null;
         }
     }
@@ -436,7 +465,7 @@ public class ImportServiceImpl implements ImportService {
         try {
             return LocalDate.parse(value.trim(), DATE_FORMATTER);
         } catch (DateTimeParseException e) {
-            errors.add(new ImportError((int) record.getRecordNumber(), field, "日期格式必须为 yyyy-MM-dd: " + value));
+            errors.add(new ImportError(lineNumber(record), field, "日期格式必须为 yyyy-MM-dd: " + value));
             return null;
         }
     }
@@ -446,7 +475,7 @@ public class ImportServiceImpl implements ImportService {
         try {
             return LocalDateTime.parse(value.trim(), DATETIME_FORMATTER);
         } catch (DateTimeParseException e) {
-            errors.add(new ImportError((int) record.getRecordNumber(), field, "时间格式必须为 yyyy-MM-dd HH:mm:ss: " + value));
+            errors.add(new ImportError(lineNumber(record), field, "时间格式必须为 yyyy-MM-dd HH:mm:ss: " + value));
             return null;
         }
     }
