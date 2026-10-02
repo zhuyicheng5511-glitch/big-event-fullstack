@@ -22,8 +22,10 @@ public class ShotChartController {
     private ShotChartService shotChartService;
 
     @GetMapping("/chart")
-    public Result<List<ZoneStat>> chart(@RequestParam @NotNull(message = "球员ID不能为空") Integer playerId,
-                                        @RequestParam @NotNull(message = "赛季ID不能为空") Integer seasonId,
+    // 两个 id 都必须是 required = false，否则参数缺失时 Spring 会在进入方法之前抛异常，
+    // 下面 @NotNull 的提示语不会生效（会被全局异常处理器兜成「服务器繁忙」）。
+    public Result<List<ZoneStat>> chart(@RequestParam(required = false) @NotNull(message = "球员ID不能为空") Integer playerId,
+                                        @RequestParam(required = false) @NotNull(message = "赛季ID不能为空") Integer seasonId,
                                         @RequestParam(required = false) String zone) {
         List<ZoneStat> list = shotChartService.chartByPlayerAndSeason(playerId, seasonId, zone);
         return Result.success(list);

@@ -25,7 +25,10 @@ public class RankController {
 
     @GetMapping("/points")
     public Result<List<RankItem>> pointsRank(
-            @RequestParam @NotNull(message = "赛季ID不能为空") Integer seasonId,
+            // 注意 required = false：@RequestParam 默认必填，参数缺失时 Spring 会在进入
+            // 方法之前直接抛 MissingServletRequestParameterException，被全局异常处理器
+            // 兜成「服务器繁忙」，下面 @NotNull 的提示语永远不会生效。
+            @RequestParam(required = false) @NotNull(message = "赛季ID不能为空") Integer seasonId,
             @RequestParam(required = false) Integer teamId,
             @RequestParam(required = false) String position,
             @RequestParam(defaultValue = "10") @Min(value = 1, message = "limit必须大于等于1") @Max(value = 100, message = "limit最大为100") Integer limit) {

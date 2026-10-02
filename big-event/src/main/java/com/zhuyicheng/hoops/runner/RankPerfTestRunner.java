@@ -31,18 +31,20 @@ public class RankPerfTestRunner implements CommandLineRunner {
         Integer limit = 10;
         int iterations = 100;
 
-        // 1. 清空缓存，测试无缓存
-        stringRedisTemplate.keys("rank:points:*").forEach(stringRedisTemplate::delete);
-
         List<Long> noCacheTimes = new ArrayList<>(iterations);
         for (int i = 0; i < iterations; i++) {
+            // 关键：清缓存必须放在循环【内部】。
+            // 若放在循环外，只有第 1 次是真正回源，第 2~iterations 次都会命中
+            // 上一次写入的缓存，于是 P95 测到的其实是缓存耗时，两组数据失去对比意义。
+            stringRedisTemplate.keys("rank:points:*").forEach(stringRedisTemplate::delete);
+
             long start = System.nanoTime();
             rankService.pointsRank(seasonId, teamId, position, limit);
             long elapsed = System.nanoTime() - start;
             noCacheTimes.add(elapsed / 1_000_000); // ns -> ms
         }
 
-        // 2. 再次测试，此时缓存已存在
+        // 2. 再次测试，此时缓存已由上一步最后一次调用写入
         List<Long> cacheTimes = new ArrayList<>(iterations);
         for (int i = 0; i < iterations; i++) {
             long start = System.nanoTime();
