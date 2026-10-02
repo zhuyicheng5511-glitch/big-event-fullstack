@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
+import { useUserStore } from '@/stores/user'
 
 // 统一配置 Axios
 const request = axios.create({
@@ -33,9 +34,13 @@ request.interceptors.response.use(
         return Promise.reject(result.data)
     },
     error => {
-        // 如果 HTTP 状态码是 401，跳转到登录页
+        // 401 = 未登录 / 登录已过期。必须【先清 token 再跳转】：
+        // 否则路由守卫看到 token 仍在，会把 /login 弹回 '/'，形成无限重定向。
         if (error.response && error.response.status === 401) {
-            ElMessage.error('请先登录')
+            const userStore = useUserStore()
+            userStore.removeToken()
+            userStore.removeUserInfo()
+            ElMessage.error('登录已过期，请重新登录')
             router.push('/login')
         } else {
             ElMessage.error('服务异常')

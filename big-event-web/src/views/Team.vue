@@ -114,6 +114,11 @@ const deleteTeam = (row) => {
 }
 
 const handleLogoSuccess = (response) => {
+  // 上传接口失败时也返回 HTTP 200，必须判断业务 code，否则会"上传失败却提示成功"
+  if (response.code !== 0) {
+    ElMessage.error(response.message || '图片上传失败')
+    return
+  }
   teamModel.value.logoUrl = response.data
   ElMessage.success('队标上传成功！')
 }

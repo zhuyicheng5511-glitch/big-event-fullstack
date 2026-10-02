@@ -15,6 +15,11 @@ const imgUrl = ref(userStore.userInfo.userPic)
 
 // 图片上传成功后的回调（利用我们之前写好的 /upload 接口）
 const handleAvatarSuccess = (response) => {
+  // 上传接口失败时也返回 HTTP 200，必须判断业务 code，否则会"上传失败却提示成功"
+  if (response.code !== 0) {
+    ElMessage.error(response.message || '图片上传失败')
+    return
+  }
   imgUrl.value = response.data
 }
 
