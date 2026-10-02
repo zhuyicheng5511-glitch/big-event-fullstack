@@ -4,9 +4,13 @@ import com.zhuyicheng.hoops.pojo.PlayerGameStat;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
+import java.util.Set;
 
 @Mapper
 public interface PlayerGameStatMapper {
+
+    @Select("select game_id as gameId, player_id as playerId from player_game_stat")
+    List<PlayerGameStat> listAllKeyPairs();
 
     @Insert("insert into player_game_stat(game_id, player_id, team_id, is_starter, minutes, points, rebounds, " +
             "assists, steals, blocks, turnovers, fouls, fgm, fga, fg3m, fg3a, ftm, fta, plus_minus, create_time, update_time) " +

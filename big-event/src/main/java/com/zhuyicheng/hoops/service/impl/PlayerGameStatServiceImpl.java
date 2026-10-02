@@ -9,6 +9,8 @@ import com.zhuyicheng.hoops.service.PlayerGameStatService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.zhuyicheng.hoops.service.RankService;
+
 import java.util.List;
 
 @Service
@@ -17,9 +19,13 @@ public class PlayerGameStatServiceImpl implements PlayerGameStatService {
     @Autowired
     private PlayerGameStatMapper playerGameStatMapper;
 
+    @Autowired
+    private RankService rankService;
+
     @Override
     public void add(PlayerGameStat stat) {
         playerGameStatMapper.add(stat);
+        rankService.evictPointsRankCache();
     }
 
     @Override
@@ -40,11 +46,19 @@ public class PlayerGameStatServiceImpl implements PlayerGameStatService {
 
     @Override
     public int update(PlayerGameStat stat) {
-        return playerGameStatMapper.update(stat);
+        int rows = playerGameStatMapper.update(stat);
+        if (rows > 0) {
+            rankService.evictPointsRankCache();
+        }
+        return rows;
     }
 
     @Override
     public int deleteById(Long id) {
-        return playerGameStatMapper.deleteById(id);
+        int rows = playerGameStatMapper.deleteById(id);
+        if (rows > 0) {
+            rankService.evictPointsRankCache();
+        }
+        return rows;
     }
 }
