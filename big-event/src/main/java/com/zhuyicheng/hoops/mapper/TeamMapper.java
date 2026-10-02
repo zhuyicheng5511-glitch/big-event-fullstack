@@ -37,4 +37,14 @@ public interface TeamMapper {
     // 删除球队
     @Delete("delete from team where id=#{id}")
     int deleteById(Integer id);
+
+    // 批量新增球队
+    @Insert("<script>" +
+            "insert into team(name, name_en, city, conference, division, logo_url, create_time, update_time) " +
+            "values " +
+            "<foreach collection='list' item='it' separator=','>" +
+            "(#{it.name}, #{it.nameEn}, #{it.city}, #{it.conference}, #{it.division}, #{it.logoUrl}, now(), now())" +
+            "</foreach>" +
+            "</script>")
+    void batchAdd(@Param("list") List<Team> list);
 }

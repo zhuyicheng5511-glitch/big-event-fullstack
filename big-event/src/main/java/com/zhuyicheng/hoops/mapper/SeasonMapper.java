@@ -35,4 +35,14 @@ public interface SeasonMapper {
     // 删除赛季
     @Delete("delete from season where id=#{id}")
     int deleteById(Integer id);
+
+    // 批量新增赛季
+    @Insert("<script>" +
+            "insert into season(name, start_date, end_date, is_current, create_time, update_time) " +
+            "values " +
+            "<foreach collection='list' item='it' separator=','>" +
+            "(#{it.name}, #{it.startDate}, #{it.endDate}, #{it.isCurrent}, now(), now())" +
+            "</foreach>" +
+            "</script>")
+    void batchAdd(@Param("list") List<Season> list);
 }

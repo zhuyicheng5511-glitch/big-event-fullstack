@@ -40,4 +40,14 @@ public interface GameMapper {
     // 删除比赛
     @Delete("delete from game where id=#{id}")
     int deleteById(Integer id);
+
+    // 批量新增比赛
+    @Insert("<script>" +
+            "insert into game(season_id, home_team_id, away_team_id, game_date, home_score, away_score, status, venue, create_time, update_time) " +
+            "values " +
+            "<foreach collection='list' item='it' separator=','>" +
+            "(#{it.seasonId}, #{it.homeTeamId}, #{it.awayTeamId}, #{it.gameDate}, #{it.homeScore}, #{it.awayScore}, #{it.status}, #{it.venue}, now(), now())" +
+            "</foreach>" +
+            "</script>")
+    void batchAdd(@Param("list") List<Game> list);
 }

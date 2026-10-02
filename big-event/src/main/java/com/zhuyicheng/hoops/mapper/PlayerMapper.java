@@ -39,4 +39,15 @@ public interface PlayerMapper {
     // 删除球员
     @Delete("delete from player where id=#{id}")
     int deleteById(Integer id);
+
+    // 批量新增球员
+    @Insert("<script>" +
+            "insert into player(name, name_en, team_id, jersey_number, position, height_cm, weight_kg, birth_date, country, avatar_url, is_active, create_time, update_time) " +
+            "values " +
+            "<foreach collection='list' item='it' separator=','>" +
+            "(#{it.name}, #{it.nameEn}, #{it.teamId}, #{it.jerseyNumber}, #{it.position}, #{it.heightCm}, #{it.weightKg}, " +
+            "#{it.birthDate}, #{it.country}, #{it.avatarUrl}, #{it.isActive}, now(), now())" +
+            "</foreach>" +
+            "</script>")
+    void batchAdd(@Param("list") List<Player> list);
 }
