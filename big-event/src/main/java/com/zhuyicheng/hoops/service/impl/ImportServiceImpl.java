@@ -341,7 +341,7 @@ public class ImportServiceImpl implements ImportService {
             String home = teamNames.get(g.getHomeTeamId());
             String away = teamNames.get(g.getAwayTeamId());
             if (home != null && away != null) {
-                String key = g.getGameDate().format(DATETIME_FORMATTER) + "_" + home + "_" + away;
+                String key = g.getGameDate().toLocalDate().format(DATE_FORMATTER) + "_" + home + "_" + away;
                 map.put(key, g.getId());
             }
         });
@@ -349,7 +349,7 @@ public class ImportServiceImpl implements ImportService {
     }
 
     private String gameKey(Game g) {
-        return g.getGameDate().format(DATETIME_FORMATTER) + "_" + g.getHomeTeamId() + "_" + g.getAwayTeamId();
+        return g.getGameDate().toLocalDate().format(DATE_FORMATTER) + "_" + g.getHomeTeamId() + "_" + g.getAwayTeamId();
     }
 
     @FunctionalInterface
