@@ -615,3 +615,27 @@ Java 代码改动**必须重启后端才生效**。当前状态：
 ### 尚未完成（W1 剩余部分）
 
 球队 / 球员 / 赛季 / 比赛的 CRUD 与分页筛选、前端菜单重构与旧标识清理，**均未开始**。
+
+---
+
+## W2 新增：CSV 导入 + 计算引擎（2026-10-02 完成）
+
+### 人工测试记录
+
+| 编号 | 测试项 | 操作步骤 | 预期结果 | 实测 |
+|---|---|---|---|---|
+| W2-1 | CSV 导入 — team | `POST /import/team` 上传 `seed/teams.csv` | 返回 30 条成功，0 错误 | ✅ |
+| W2-2 | CSV 导入 — season | `POST /import/season` 上传 `seed/seasons.csv` | 返回 1 条成功 | ✅ |
+| W2-3 | CSV 导入 — player | `POST /import/player` 上传 `seed/players.csv` | 返回 39 条成功 | ✅ |
+| W2-4 | CSV 导入 — game | `POST /import/game` 上传 `seed/games.csv` | 返回 8 条成功 | ✅ |
+| W2-5 | CSV 导入 — player-game-stat | `POST /import/player-game-stat` 上传 `seed/player_game_stats.csv` | 返回 24 条成功 | ✅ |
+| W2-6 | 导入错误回滚 | 构造含重复球队的 CSV 导入 | 报告具体行号与原因，库中无新增 | ✅ |
+| W2-7 | 生成 10 万条 shot | `mvn spring-boot:run -Dspring-boot.run.arguments=--generate-shots` | shot 表 COUNT ≥ 100000 | ✅ |
+| W2-8 | StatCalculator 单元测试 | `mvn test` | 23 个测试全绿 | ✅ |
+
+### 测试环境
+
+- 临时后端端口：`8090`
+- 测试数据库：`hoops_w2`
+- 数据量：`team=30 / season=1 / player=39 / game=8 / player_game_stat=24 / shot=100000`
+
