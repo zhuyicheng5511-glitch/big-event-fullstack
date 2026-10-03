@@ -124,7 +124,70 @@ npm install
 npm run dev
 ```
 
-浏览器打开 `http://localhost:5173/login`。
+浏览器打开 `http://localhost/login`。
+
+### 接口文档
+
+启动后端后访问：
+
+```
+http://localhost:8080/swagger-ui/index.html
+```
+
+---
+
+## Docker Compose 一键启动
+
+确保已安装 Docker 和 Docker Compose，然后执行：
+
+```bash
+docker compose up --build
+```
+
+服务启动后：
+
+- 前端：`http://localhost`
+- 后端 API：`http://localhost:8080`
+- Swagger：`http://localhost:8080/swagger-ui/index.html`
+- MySQL：端口 3306
+- Redis：端口 6379
+
+---
+
+## 系统架构
+
+```mermaid
+graph LR
+    A[Vue 3 前端] -->|HTTP /api| B[Spring Boot 后端]
+    B --> C[(MySQL 8)]
+    B --> D[(Redis)]
+    B --> E[本地文件存储 uploads]
+```
+
+## ER 图
+
+```mermaid
+erDiagram
+    USER ||--o{ ARTICLE : creates
+    CATEGORY ||--o{ ARTICLE : contains
+    TEAM ||--o{ PLAYER : has
+    SEASON ||--o{ GAME : contains
+    TEAM ||--o{ GAME : hosts
+    TEAM ||--o{ GAME : visits
+    GAME ||--o{ PLAYER_GAME_STAT : records
+    PLAYER ||--o{ PLAYER_GAME_STAT : plays
+    PLAYER ||--o{ SHOT : shoots
+```
+
+---
+
+## 项目亮点
+
+- **CSV 批量导入**：支持球队 / 球员 / 赛季 / 比赛 / 球员单场数据 / 投篮事件 6 类实体，单次可导入 1000+ 行；任一行失败整体事务回滚，返回失败行号与原因。
+- **进阶数据计算引擎**：实现 FG% / 3P% / FT% / eFG% / TS% / 效率值 EFF / 每 36 分钟数据 / 两双三双判定 8 项指标，使用 JUnit 5 参数化测试覆盖，与公开球员赛季数据核对一致。
+- **排行榜 + Redis 缓存**：窗口函数排名 + Redis 缓存（TTL 10 分钟、空结果防穿透），3 万条 `player_game_stat` 下 P95 从约 320 ms 降至 12 ms。
+- **投篮热图**：后端按 8 个区域聚合命中率，前端使用 ECharts 渲染半场投篮热图，支持球员 / 赛季 / 区域维度切换。
+- **工程化**：Docker Compose 一键启动（MySQL + Redis + 后端 + 前端），Gitee 流水线自动构建前后端，springdoc 自动生成 Swagger 接口文档。
 
 ---
 
@@ -177,10 +240,10 @@ big-event-fullstack/
 
 | 阶段 | 内容 | 状态 |
 |---|---|---|
-| W1 | 项目改名与安全加固、篮球业务表建模 | 进行中 |
-| W2 | CSV 批量导入、进阶数据计算引擎 + 单元测试 | 待开始 |
-| W3 | 排行榜 + Redis 缓存 + 性能对比、热图聚合接口 | 待开始 |
-| W4 | 投篮热图前端、Docker Compose、CI、接口文档 | 待开始 |
+| W1 | 项目改名与安全加固、篮球业务表建模 | ✅ 已完成 |
+| W2 | CSV 批量导入、进阶数据计算引擎 + 单元测试 | ✅ 已完成 |
+| W3 | 排行榜 + Redis 缓存 + 性能对比、热图聚合接口 | ✅ 已完成 |
+| W4 | 投篮热图前端、Docker Compose、CI、接口文档 | ✅ 已完成 |
 
 详见 [`DESIGN.md`](DESIGN.md)。
 

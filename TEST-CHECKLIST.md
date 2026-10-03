@@ -639,3 +639,24 @@ Java 代码改动**必须重启后端才生效**。当前状态：
 - 测试数据库：`hoops_w2`
 - 数据量：`team=30 / season=1 / player=39 / game=8 / player_game_stat=24 / shot=100000`
 
+---
+
+## W4 新增：前端可视化 + 工程化 + 收尾（2026-10-03 完成）
+
+### 人工测试记录
+
+| 编号 | 测试项 | 操作步骤 | 预期结果 | 实测 |
+|---|---|---|---|---|
+| W4-1 | 排行榜页面 | 菜单进入「排行榜」，选择赛季/球队/位置，点击查询 | 显示排名、球员、球队、得分 | ✅ |
+| W4-2 | 投篮热图页面 | 菜单进入「投篮热图」，选择球员/赛季，点击查询 | ECharts 半场图渲染，显示区域命中率 | ✅ |
+| W4-3 | 球员雷达图页面 | 菜单进入「球员雷达」，选择球员/赛季，点击查询 | ECharts 雷达图渲染 | ✅ |
+| W4-4 | springdoc 接口文档 | 启动后端，访问 `/swagger-ui/index.html` | Swagger UI 正常显示接口 | ✅ |
+| W4-5 | Docker Compose 一键启动 | 执行 `docker compose up --build` | MySQL/Redis/后端/前端全部启动 | ⬜ |
+| W4-6 | Gitee 流水线 | push 到 `feature/basketball` 分支 | 流水线执行并通过 | ⬜ |
+| W4-7 | 前端构建 | `npm run build` | 构建成功，生成 dist | ✅ |
+| W4-8 | 后端测试 | `mvn test` | StatCalculator 等测试全绿 | ✅ |
+
+### 说明
+
+- W4-5 / W4-6 需具备 Docker / Gitee 流水线环境；其余已在本地验证通过。
+
