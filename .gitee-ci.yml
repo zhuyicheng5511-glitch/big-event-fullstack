@@ -1,0 +1,30 @@
+stages:
+  - backend
+  - frontend
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  NODE_VERSION: "22"
+
+backend-build:
+  stage: backend
+  image: maven:3.9-eclipse-temurin-17
+  script:
+    - cd big-event
+    - mvn test -B
+  cache:
+    key: m2
+    paths:
+      - .m2/repository
+
+frontend-build:
+  stage: frontend
+  image: node:22-alpine
+  script:
+    - cd big-event-web
+    - npm ci
+    - npm run build
+  cache:
+    key: node_modules
+    paths:
+      - big-event-web/node_modules

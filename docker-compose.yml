@@ -1,0 +1,58 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: hoops-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: hoops
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./big-event/src/main/resources/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./big-event/src/main/resources/db/schema-basketball.sql:/docker-entrypoint-initdb.d/02-schema-basketball.sql
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p123456"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: hoops-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./big-event
+    container_name: hoops-backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_USERNAME: root
+      DB_PASSWORD: 123456
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: 8a718c39caf4269da4f1df1fec54ee81473fefc8cbb81de946889af467b92dfb
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build: ./big-event-web
+    container_name: hoops-frontend
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  mysql_data:
