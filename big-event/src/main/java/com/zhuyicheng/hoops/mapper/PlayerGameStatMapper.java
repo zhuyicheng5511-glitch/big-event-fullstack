@@ -1,6 +1,7 @@
 package com.zhuyicheng.hoops.mapper;
 
 import com.zhuyicheng.hoops.pojo.PlayerGameStat;
+import com.zhuyicheng.hoops.pojo.PlayerStatSummary;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
@@ -30,6 +31,35 @@ public interface PlayerGameStatMapper {
     List<PlayerGameStat> list(@Param("gameId") Integer gameId,
                               @Param("playerId") Integer playerId,
                               @Param("teamId") Integer teamId);
+
+    /**
+     * 球员汇总统计：场均数据与命中率直接在数据库里聚合。
+     * 明细列表接口受分页上限（单页最多 100 条）限制，拿它当全量来平均会算错，
+     * 所以场均类指标一律走这条 SQL —— 无论多少场比赛都只返回一行。
+     * seasonId 传 null 表示不限赛季。
+     */
+    @Select("<script>" +
+            "select s.player_id as playerId, p.name as playerName, count(*) as games, " +
+            "  round(avg(s.minutes), 1) as avgMinutes, " +
+            "  round(avg(s.points), 1) as avgPoints, " +
+            "  round(avg(s.rebounds), 1) as avgRebounds, " +
+            "  round(avg(s.assists), 1) as avgAssists, " +
+            "  round(avg(s.steals), 1) as avgSteals, " +
+            "  round(avg(s.blocks), 1) as avgBlocks, " +
+            "  round(avg(s.turnovers), 1) as avgTurnovers, " +
+            "  sum(s.points) as totalPoints, " +
+            "  round(sum(s.fgm) * 100.0 / nullif(sum(s.fga), 0), 1) as fgPct, " +
+            "  round(sum(s.fg3m) * 100.0 / nullif(sum(s.fg3a), 0), 1) as fg3Pct, " +
+            "  round(sum(s.ftm) * 100.0 / nullif(sum(s.fta), 0), 1) as ftPct " +
+            "from player_game_stat s " +
+            "join player p on p.id = s.player_id " +
+            "join game g on g.id = s.game_id " +
+            "where s.player_id = #{playerId} " +
+            "<if test=\"seasonId != null\"> and g.season_id = #{seasonId} </if>" +
+            "group by s.player_id, p.name" +
+            "</script>")
+    PlayerStatSummary summary(@Param("playerId") Integer playerId,
+                              @Param("seasonId") Integer seasonId);
 
     @Select("select * from player_game_stat where id = #{id}")
     PlayerGameStat findById(Long id);

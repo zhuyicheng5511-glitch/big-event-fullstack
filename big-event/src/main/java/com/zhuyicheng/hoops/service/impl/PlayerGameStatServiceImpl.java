@@ -5,6 +5,7 @@ import com.github.pagehelper.PageHelper;
 import com.zhuyicheng.hoops.mapper.PlayerGameStatMapper;
 import com.zhuyicheng.hoops.pojo.PageBean;
 import com.zhuyicheng.hoops.pojo.PlayerGameStat;
+import com.zhuyicheng.hoops.pojo.PlayerStatSummary;
 import com.zhuyicheng.hoops.service.PlayerGameStatService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,12 @@ public class PlayerGameStatServiceImpl implements PlayerGameStatService {
         pb.setTotal(p.getTotal());
         pb.setItems(p.getResult());
         return pb;
+    }
+
+    @Override
+    public PlayerStatSummary summary(Integer playerId, Integer seasonId) {
+        // 直接让数据库做聚合：明细分页单页上限 100 条，前端拿第一页当全量会算错场均数据
+        return playerGameStatMapper.summary(playerId, seasonId);
     }
 
     @Override

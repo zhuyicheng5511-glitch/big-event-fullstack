@@ -2,6 +2,7 @@ package com.zhuyicheng.hoops.controller;
 
 import com.zhuyicheng.hoops.pojo.PageBean;
 import com.zhuyicheng.hoops.pojo.PlayerGameStat;
+import com.zhuyicheng.hoops.pojo.PlayerStatSummary;
 import com.zhuyicheng.hoops.pojo.Result;
 import com.zhuyicheng.hoops.service.PlayerGameStatService;
 import jakarta.validation.constraints.Max;
@@ -38,7 +39,23 @@ public class PlayerGameStatController {
         return Result.success(pb);
     }
 
-    // 3. 查询球员单场数据详情
+    // 3. 球员汇总统计（场均数据与命中率）
+    // 明细分页接口单页最多 100 条，前端把第一页当全量去平均会算错，场均类指标走这个接口。
+    // 路径是字面量 /summary，PathPattern 会优先于 /{id} 匹配，不会被下面的详情接口截走。
+    @GetMapping("/summary")
+    public Result<PlayerStatSummary> summary(
+            @RequestParam(required = false) @NotNull(message = "球员ID不能为空") Integer playerId,
+            @RequestParam(required = false) Integer seasonId) {
+        PlayerStatSummary summary = playerGameStatService.summary(playerId, seasonId);
+        if (summary == null) {
+            // 「该球员在该赛季没有比赛」是正常的空结果而不是错误，
+            // 返回 code 0 + null，让前端展示「暂无数据」；返回 code 1 会弹错误提示
+            return Result.success(null);
+        }
+        return Result.success(summary);
+    }
+
+    // 4. 查询球员单场数据详情
     @GetMapping("/{id}")
     public Result<PlayerGameStat> detail(@PathVariable @NotNull(message = "记录ID不能为空") Long id) {
         PlayerGameStat stat = playerGameStatService.findById(id);
@@ -48,7 +65,7 @@ public class PlayerGameStatController {
         return Result.success(stat);
     }
 
-    // 4. 修改球员单场数据
+    // 5. 修改球员单场数据
     @PutMapping
     public Result update(@RequestBody @Validated PlayerGameStat stat) {
         if (playerGameStatService.update(stat) == 0) {
@@ -57,7 +74,7 @@ public class PlayerGameStatController {
         return Result.success();
     }
 
-    // 5. 删除球员单场数据
+    // 6. 删除球员单场数据
     @DeleteMapping("/{id}")
     public Result deleteById(@PathVariable @NotNull(message = "记录ID不能为空") Long id) {
         if (playerGameStatService.deleteById(id) == 0) {
