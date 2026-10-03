@@ -10,6 +10,9 @@ import SeasonVue from '@/views/Season.vue'
 import TeamVue from '@/views/Team.vue'
 import PlayerVue from '@/views/Player.vue'
 import GameVue from '@/views/Game.vue'
+import RankVue from '@/views/Rank.vue'
+import ShotChartVue from '@/views/ShotChart.vue'
+import PlayerRadarVue from '@/views/PlayerRadar.vue'
 
 // 引入 Pinia 的用户仓库
 import { useUserStore } from '@/stores/user'
@@ -27,6 +30,9 @@ const router = createRouter({
         { path: '/player', component: PlayerVue },
         { path: '/season', component: SeasonVue },
         { path: '/game', component: GameVue },
+        { path: '/rank', component: RankVue },
+        { path: '/shot-chart', component: ShotChartVue },
+        { path: '/player-radar', component: PlayerRadarVue },
         { path: '/article/category', component: ArticleCategoryVue },
         { path: '/article/manage', component: ArticleManageVue },
         { path: '/user/avatar', component: UserAvatarVue },

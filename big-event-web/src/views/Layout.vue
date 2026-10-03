@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted } from 'vue'
-import { Basketball, User, Calendar, Timer, Reading, UserFilled, Crop, EditPen, SwitchButton, CaretBottom } from '@element-plus/icons-vue'
+import { Basketball, User, Calendar, Timer, Reading, UserFilled, Crop, EditPen, SwitchButton, CaretBottom, Trophy, Aim, PieChart } from '@element-plus/icons-vue'
 import { userGetInfoService } from '@/api/user'
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
@@ -68,6 +68,18 @@ const handleCommand = (command) => {
         <el-menu-item index="/game">
           <el-icon><Timer /></el-icon>
           <span>比赛</span>
+        </el-menu-item>
+        <el-menu-item index="/rank">
+          <el-icon><Trophy /></el-icon>
+          <span>排行榜</span>
+        </el-menu-item>
+        <el-menu-item index="/shot-chart">
+          <el-icon><Aim /></el-icon>
+          <span>投篮热图</span>
+        </el-menu-item>
+        <el-menu-item index="/player-radar">
+          <el-icon><PieChart /></el-icon>
+          <span>球员雷达</span>
         </el-menu-item>
         <el-sub-menu index="/article">
           <template #title>
