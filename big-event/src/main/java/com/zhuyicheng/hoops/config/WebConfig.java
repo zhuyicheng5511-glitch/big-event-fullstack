@@ -16,8 +16,9 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(loginInterceptor)
-                // 排除注册、登录接口，同时排除上传图片的访问路径
-                .excludePathPatterns("/user/login", "/user/register", "/uploads/**","/error");
+                // 排除注册、登录接口，同时排除上传图片的访问路径和接口文档路径
+                .excludePathPatterns("/user/login", "/user/register", "/uploads/**", "/error",
+                        "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html");
     }
 
     @Override
