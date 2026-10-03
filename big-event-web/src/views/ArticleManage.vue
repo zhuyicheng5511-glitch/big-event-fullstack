@@ -150,7 +150,7 @@ const deleteArticle = (row) => {
   <el-card class="page-container">
     <template #header>
       <div class="header">
-        <span>文章管理</span>
+        <span>资讯文章</span>
         <el-button type="primary" @click="showAddDrawer">发布文章</el-button>
       </div>
     </template>

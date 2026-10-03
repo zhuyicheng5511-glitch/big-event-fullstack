@@ -101,7 +101,7 @@ const deleteCategory = (row) => {
     <!-- 卡片头部 -->
     <template #header>
       <div class="header">
-        <span>文章分类</span>
+        <span>资讯分类</span>
         <el-button type="primary" @click="showDialog()">添加分类</el-button>
       </div>
     </template>
