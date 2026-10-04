@@ -84,11 +84,12 @@
             <version>4.0.1</version>
             <scope>test</scope>
         </dependency>
-        <!-- PageHelper 分页插件 -->
+        <!-- PageHelper 分页插件。4.1.x 才匹配 Spring Boot 4 / JDK 17；
+             不要选 4.0.0（要求 JDK 21+），1.4.7 配套的是 Boot 2.x -->
         <dependency>
             <groupId>com.github.pagehelper</groupId>
             <artifactId>pagehelper-spring-boot-starter</artifactId>
-            <version>1.4.7</version>
+            <version>4.1.1</version>
         </dependency>
         <!-- Redis 依赖 -->
         <dependency>
