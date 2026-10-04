@@ -6,13 +6,15 @@ import com.zhuyicheng.hoops.mapper.RankMapper;
 import com.zhuyicheng.hoops.pojo.RankItem;
 import com.zhuyicheng.hoops.service.RankService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -62,9 +64,21 @@ public class RankServiceImpl implements RankService {
 
     @Override
     public void evictPointsRankCache() {
-        Set<String> keys = stringRedisTemplate.keys(CACHE_PREFIX + "*");
-        if (keys != null && !keys.isEmpty()) {
-            stringRedisTemplate.delete(keys);
+        // 用 SCAN 游标分批遍历代替 KEYS：KEYS 一次性扫描整个 keyspace 并阻塞 Redis 单线程，
+        // key 多时会拖垮整个实例；SCAN 分小批迭代、攒批删除，对线上影响最小。
+        ScanOptions options = ScanOptions.scanOptions().match(CACHE_PREFIX + "*").count(200).build();
+        List<String> batch = new ArrayList<>(200);
+        try (Cursor<String> cursor = stringRedisTemplate.scan(options)) {
+            while (cursor.hasNext()) {
+                batch.add(cursor.next());
+                if (batch.size() >= 200) {
+                    stringRedisTemplate.delete(batch);
+                    batch.clear();
+                }
+            }
+        }
+        if (!batch.isEmpty()) {
+            stringRedisTemplate.delete(batch);
         }
     }
 
