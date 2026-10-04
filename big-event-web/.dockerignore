@@ -1,0 +1,8 @@
+# 防止本机 Windows 的 node_modules 盖掉镜像里 npm ci 装好的 Linux 依赖
+node_modules
+# 构建产物在镜像内重新生成，不需要本机的
+dist
+# 本地环境与编辑器残留
+*.local
+.vscode
+.idea
