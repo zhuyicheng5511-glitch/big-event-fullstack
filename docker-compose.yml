@@ -42,7 +42,8 @@ services:
       DB_PASSWORD: 123456
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      JWT_SECRET: 8a718c39caf4269da4f1df1fec54ee81473fefc8cbb81de946889af467b92dfb
+      # 密钥不进仓库：从 .env 读取（参照 .env.example），未设置时启动直接报错
+      JWT_SECRET: ${JWT_SECRET:?please set JWT_SECRET in .env, see .env.example}
     ports:
       - "8080:8080"
 

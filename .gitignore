@@ -13,4 +13,6 @@
 
 # 忽略本地上传的图片文件夹（不污染远程仓库）
 **/uploads/
+# 本地敏感配置（JWT 密钥等），参照 .env.example
+.env
 .DS_Store

@@ -43,7 +43,9 @@ public class FileUploadController {
                 return Result.error("上传目录创建失败");
             }
             file.transferTo(new File(localPath + filename));
-            return Result.success("http://localhost:8080/uploads/" + filename);
+            // 返回相对路径：dev 由 vite 代理、Docker 由 nginx 把 /uploads 转发到后端，
+            // 硬编码 http://localhost:8080 会在 Docker/换环境后变成死链（且已写进数据库）
+            return Result.success("/uploads/" + filename);
         } catch (IOException e) {
             e.printStackTrace();
             return Result.error("文件上传失败");
