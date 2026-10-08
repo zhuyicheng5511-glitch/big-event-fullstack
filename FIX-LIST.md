@@ -700,6 +700,7 @@ compose 加一次性 `seed` 服务串起 `--import-seed → --generate-stats →
 **验收已达成**：`down -v && up -d --build` 一次成功（seed `Exited (0)`），
 `paulgeorge8` 直接登录，`/rank/points`、`/shot/chart`、`/player-game-stat/summary` 均返回真实数据，
 `nginx /api` 代理路径同步通过；**二次 `up` seed 约 5 秒跳过且所有数字不变**。
+**用户已按验收步骤亲自复验通过（2026-10-08），A 项关闭。**
 
 <details>
 <summary>以下是 A 项当时的原始问题记录（保留供回溯）</summary>
