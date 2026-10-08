@@ -16,3 +16,7 @@
 # 本地敏感配置（JWT 密钥等），参照 .env.example
 .env
 .DS_Store
+
+# 本地工作/交接文档（不提交进仓库）
+FIX-LIST.md
+AGENT_HANDOFF.md
