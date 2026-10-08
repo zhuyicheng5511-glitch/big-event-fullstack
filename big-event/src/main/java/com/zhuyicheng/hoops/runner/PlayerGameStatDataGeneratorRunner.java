@@ -8,18 +8,22 @@ import com.zhuyicheng.hoops.pojo.Season;
 import com.zhuyicheng.hoops.pojo.Team;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
 @Component
+@Order(20) // 在 SeedDataRunner(10) 之后：补数要引用已入库的 season/team/player
 public class PlayerGameStatDataGeneratorRunner implements CommandLineRunner {
 
     @Autowired
@@ -83,10 +87,14 @@ public class PlayerGameStatDataGeneratorRunner implements CommandLineRunner {
         List<Game> allGames = new ArrayList<>(existingGames);
         allGames.addAll(newGames);
 
-        // 加载已存在的 (gameId, playerId) 对，避免唯一约束冲突
+        // 加载已存在的 (gameId, playerId) 对，避免唯一约束冲突；
+        // 同时按 game 统计已有条数 —— 原实现每场只数「本次新插的」凑满 25 就停，
+        // 重跑会给已有数据的比赛再补 25 条新对（幂等失效，compose 的 seed 每次 up 都会叠加）。
         Set<String> existingPairs = new HashSet<>();
+        Map<Integer, Integer> existingCountByGame = new HashMap<>();
         for (PlayerGameStat stat : playerGameStatMapper.listAllKeyPairs()) {
             existingPairs.add(stat.getGameId() + ":" + stat.getPlayerId());
+            existingCountByGame.merge(stat.getGameId(), 1, Integer::sum);
         }
 
         // 每场比赛生成 25 条球员数据；已有数据的不再重复插入
@@ -98,10 +106,16 @@ public class PlayerGameStatDataGeneratorRunner implements CommandLineRunner {
         int generated = 0;
         int skippedGames = 0;
         for (Game game : allGames) {
+            int already = existingCountByGame.getOrDefault(game.getId(), 0);
+            int need = statsPerGame - already;
+            if (need <= 0) {
+                skippedGames++;
+                continue;
+            }
             int countForGame = 0;
             Collections.shuffle(players, random);
             for (Player player : players) {
-                if (countForGame >= statsPerGame) {
+                if (countForGame >= need) {
                     break;
                 }
                 String key = game.getId() + ":" + player.getId();

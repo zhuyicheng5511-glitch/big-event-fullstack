@@ -9,8 +9,11 @@ import java.util.List;
 public interface GameMapper {
 
     // 新增比赛
+    // useGeneratedKeys：回填自增主键 —— PlayerGameStatDataGeneratorRunner 批量造完比赛后
+    // 要立刻用 game.getId() 挂单场数据，不回填就是「Column 'game_id' cannot be null」。
     @Insert("insert into game(season_id, home_team_id, away_team_id, game_date, home_score, away_score, status, venue, create_time, update_time) " +
             "values(#{seasonId}, #{homeTeamId}, #{awayTeamId}, #{gameDate}, #{homeScore}, #{awayScore}, #{status}, #{venue}, now(), now())")
+    @Options(useGeneratedKeys = true, keyProperty = "id")
     void add(Game game);
 
     // 条件分页查询（按赛季、球队、状态筛选）

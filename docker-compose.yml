@@ -30,6 +30,7 @@ services:
 
   backend:
     build: ./big-event
+    image: hoops-backend:local   # 显式 tag，供 seed 服务复用同一镜像、避免重复构建
     container_name: hoops-backend
     depends_on:
       mysql:
@@ -46,6 +47,29 @@ services:
       JWT_SECRET: ${JWT_SECRET:?please set JWT_SECRET in .env, see .env.example}
     ports:
       - "8080:8080"
+
+  # 一次性造数服务：空库上 --import-seed 导种子 CSV → --generate-stats 补到 1200 场
+  # → --generate-shots 补到 10 万投篮点。三个 Runner 均有 @Order 保证先后、且幂等
+  # （已有数据即跳过），所以每次 docker compose up 重跑都安全。
+  # --spring.main.web-application-type=none：跑完 Runner 后 JVM 直接退出，
+  # 不会留下一个不监听端口的第二 web 实例（seed 容器的职责到造数为止）。
+  # restart: on-failure 兜底 mysql initdb 尚未完成的小窗口，失败自动重试直到成功。
+  seed:
+    build: ./big-event
+    image: hoops-backend:local
+    container_name: hoops-seed
+    depends_on:
+      backend:
+        condition: service_started
+    environment:
+      DB_HOST: mysql
+      DB_USERNAME: root
+      DB_PASSWORD: 123456
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:?please set JWT_SECRET in .env, see .env.example}
+    command: ["--import-seed", "--generate-stats", "--generate-shots", "--spring.main.web-application-type=none"]
+    restart: "on-failure"
 
   frontend:
     build: ./big-event-web

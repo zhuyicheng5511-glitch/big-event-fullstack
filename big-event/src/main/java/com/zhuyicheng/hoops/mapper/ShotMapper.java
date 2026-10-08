@@ -36,6 +36,9 @@ public interface ShotMapper {
     @Delete("delete from shot where id = #{id}")
     int deleteById(Long id);
 
+    @Select("select count(*) from shot")
+    long count();
+
     @Insert("<script>" +
             "insert into shot(game_id, player_id, quarter, game_clock, x, y, distance_ft, shot_type, made, zone, assisted_by, create_time) " +
             "values " +

@@ -4,6 +4,7 @@ import com.zhuyicheng.hoops.mapper.*;
 import com.zhuyicheng.hoops.pojo.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -11,6 +12,7 @@ import java.math.RoundingMode;
 import java.util.*;
 
 @Component
+@Order(30) // 在 SeedDataRunner(10) 与 PlayerGameStatDataGeneratorRunner(20) 之后：投篮点要撒在已存在的比赛上
 public class ShotDataGeneratorRunner implements CommandLineRunner {
 
     @Autowired
@@ -66,6 +68,17 @@ public class ShotDataGeneratorRunner implements CommandLineRunner {
         }
 
         int target = 100_000;
+
+        // 幂等：只补到 10 万，而不是每次无条件插 10 万。
+        // compose 的 seed 服务在每次 docker compose up 都会重跑，原实现第二次会把
+        // shot 叠加成 20 万，验收数字（count = 100000）直接对不上。
+        long existing = shotMapper.count();
+        if (existing >= target) {
+            System.out.println("[ShotDataGenerator] shot 已有 " + existing + " 条，跳过生成");
+            return;
+        }
+        target -= existing;
+
         int batchSize = 1000;
         long startTime = System.currentTimeMillis();
         List<Shot> batch = new ArrayList<>(batchSize);
@@ -123,7 +136,7 @@ public class ShotDataGeneratorRunner implements CommandLineRunner {
         }
 
         long elapsed = System.currentTimeMillis() - startTime;
-        System.out.println("[ShotDataGenerator] done: " + target + " shots in " + elapsed + " ms");
+        System.out.println("[ShotDataGenerator] done: +" + target + " shots, total " + shotMapper.count() + " in " + elapsed + " ms");
     }
 
     private boolean shouldRun(String[] args) {
