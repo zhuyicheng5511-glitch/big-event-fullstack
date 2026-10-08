@@ -138,19 +138,30 @@ http://localhost:8080/swagger-ui/index.html
 
 ## Docker Compose 一键启动
 
-确保已安装 Docker 和 Docker Compose，然后执行：
+确保已安装 Docker 和 Docker Compose，在项目根目录创建 `.env`（模板见 `.env.example`）并设置 `JWT_SECRET`，然后执行：
 
 ```bash
-docker compose up --build
+docker compose up -d --build
 ```
 
-服务启动后：
+启动后 MySQL 自动建表，随后**一次性 `seed` 容器**会自动导入种子数据并生成演示规模的数据
+（1 赛季 / 30 队 / 39 球员 / 1200 场比赛 / 约 3 万条单场数据 / 10 万条投篮点），
+跑完即自动退出 —— 之后直接用演示账号 `paulgeorge8 / asdfgh` 登录，
+投篮热图、球员雷达、排行榜开箱即有数据，全程无需手工操作。
+
+启动完成后：
 
 - 前端：`http://localhost`
 - 后端 API：`http://localhost:8080`
 - Swagger：`http://localhost:8080/swagger-ui/index.html`
 - MySQL：端口 3306
 - Redis：端口 6379
+
+> **查看造数进度**：`docker compose ps` 中 `hoops-seed` 应为 `Exited (0)`（正常结束）；
+> 日志见 `docker compose logs seed`。
+> **可安全重跑**：造数链路（`--import-seed --generate-stats --generate-shots`）幂等，
+> 检测到已有数据会跳过或只补差额，重复 `docker compose up` 不会叠加。
+> **从零重来**：`docker compose down -v` 会连数据卷一起删除，下次 `up` 重新初始化。
 
 ---
 

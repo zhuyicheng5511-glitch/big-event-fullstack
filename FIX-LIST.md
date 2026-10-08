@@ -24,11 +24,11 @@
 |---|---|---|---|
 | **FIX-1** | CSV 带 BOM 导致整表导入失败 | 2026-10-02 验收实测发现 | ✅ **已修复并提交**（`b1a6191`，已实测验证） |
 | **FIX-2** | `ImportError.rowNumber` 语义与注释不符 | 2026-10-02 验收实测发现 | ✅ **已修复并提交**（`b1a6191`，已实测验证） |
-| **FIX-3** | 401 后无法回到登录页（无限重定向，用户卡死） | 历史遗留 P1，本轮提升为必修 | ⬜ **待修** |
-| **FIX-4** | 上传无类型校验（存储型 XSS）+ 无扩展名文件 500 | 历史遗留 P1/P2，本轮提升为必修 | ⬜ **待修** |
+| **FIX-3** | 401 后无法回到登录页（无限重定向，用户卡死） | 历史遗留 P1，本轮提升为必修 | ✅ **已修复并提交**（`f7f4777`，代码已含清 token 逻辑） |
+| **FIX-4** | 上传无类型校验（存储型 XSS）+ 无扩展名文件 500 | 历史遗留 P1/P2，本轮提升为必修 | ✅ **已修复并提交**（`f7f4777`，白名单+魔数校验+前端 code 判断均已落地） |
 
-> FIX-1 / FIX-2 已完成，下面的内容保留供回溯。
-> **当前要修的是 FIX-3 和 FIX-4。**
+> **FIX-1 ~ FIX-4 全部已完成**（2026-10-08 逐一核对代码确认，本节旧版状态列未更新）。
+> 当前剩余工作见**第七节**：A 已完成（`b864b34`）；剩 B = 测试与 CI、C = 遗留 P1/P2。
 
 ---
 
@@ -550,12 +550,14 @@ curl.exe -s -X POST http://localhost:8080/upload -H "Authorization: $TOKEN" -F "
 | 项 | 说明 |
 |---|---|
 | 图片死链 | `hoops` 库中 5 处图片引用有 **2 处文件缺失**（`07f9f5e9-…jpg` 是文章 id=7 的封面、`ec8bace5-…webp` 是 paulgeorge8 的头像）。`uploads/` 目录被 `.gitignore` 忽略，**换机器/重新 clone 后图片会再次全部失效** |
-| `shot` 表为空 | 10 万条造数尚未执行（见第 3 节）。**投篮热图（三个技术亮点之一）依赖它** |
-| 种子数据偏少 | `players.csv` 只有 39 人（`DESIGN.md` 计划约 300）、`games.csv` 只有 8 场（计划 100）。30 支队配 39 人，多数球队没有球员，前端按球队筛选会是空列表 |
+| ~~`shot` 表为空~~ | ✅ 已解决（W4 前已造数）：`shot` = 100000 |
+| 数据真实性 | `game` 1200 场接近真实（约 1230 场），但 `player_game_stat` 30024 行 / 39 人 ≈ 每人 770 场，真实球员一赛季约 82 场 —— 程序生成的合成数据，面试被问需如实说明 |
 
 ---
 
 ## 三、当前进度与下一步
+
+> ⚠️ 本节是 **2026-10-02 W2 阶段**的快照，已过时。当前（2026-10-08）是 **W1–W4 全部完成**，剩余工作见**第七节**。
 
 ### 已完成（W1 全部 + W2 大部分）
 
@@ -623,11 +625,13 @@ cd C:\Users\朱毅城\Desktop\big-event-fullstack\big-event
 | `testuser1` | **未知**（用户改过） | 密码仍是历史 MD5，下次登录成功会自动升级为 BCrypt |
 
 - 数据库：**`hoops`**（9 张表，在用）；`big_event` 是旧库，**保留作退路，不要删**
-- 当前 `hoops` 数据：`user` 2 / `category` 2 / `article` 3 / `season` 1 / `team` 30 / `player` 39 / `game` 8 / `player_game_stat` 24 / `shot` **0**
+- 当前 `hoops` 数据：`user` 3 / `category` 2 / `article` 3 / `season` 1 / `team` 30 / `player` 39 / `game` 1200 / `player_game_stat` 30024 / `shot` 100000
 
 ---
 
 ## 五、建议的修复顺序
+
+> ⚠️ 本节是 **W2 阶段**的历史顺序（FIX-1 ~ FIX-4 及 B2 等均已修复）。当前（2026-10-08）的剩余工作与顺序见**第七节**，以第七节为准。
 
 ```
 1. FIX-1（BOM）        ← 本次验收新发现，影响所有 Excel 用户，必修
@@ -648,13 +652,134 @@ cd C:\Users\朱毅城\Desktop\big-event-fullstack\big-event
 
 ## 六、给接手 Agent 的说明
 
-你好。这个项目当前状态是：**W1 完成、W2 大部分完成、正在做验收**。
+你好。这个项目当前状态是：**W1–W4 全部完成并已推送**，剩余工作见第七节（A / B / C 三项）。
 
-**请从 FIX-1 开始。** 它是本次验收唯一发现的真实代码缺陷，影响面最大，修复也很小。
+**请从第七节的 B 开始（测试覆盖 + CI）。** 第一节 FIX-1 ~ FIX-4、原 NEW-1 ~ NEW-6、Q1、以及第七节 A（Docker 自动造数，`b864b34`）均已完成。
 
 **注意区分**：
-- 本文件第一节的 FIX-1 / FIX-2 是**实测发现、尚未修复**的，优先级最高
-- 第二节的表格是**历史遗留**，其中「位置」列给了具体的文件与行号，可直接定位
+- 第一节的 FIX-1 ~ FIX-4 是**已修复**的历史必修项，其「修复指引」仍可作为同类问题的参考
+- 第七节是**当前剩余工作**：A = ~~Docker 演示数据~~ ✅ 已完成、B = 测试覆盖 + CI（P1，下一个）、C = 遗留 P1/P2 小毛病（引用第二节）
+- 第二节的表格是**历史遗留缺陷总表**，「位置」列给了具体文件与行号；第七节 C 的编号与第二节一一对应
 - 已修复的项**没有**列进本文件（如 JWT 密钥硬编码、无盐 MD5、前端旧标识等，见 `TEST-CHECKLIST.md` 附录 F/G）
 
 **不确定时**：先查 `TEST-CHECKLIST.md` 附录 D（风险点速查），再 `git log -p` 看最近提交的正文（改动原因都写在 commit message 里），仍不确定就问用户，**不要猜**。
+
+---
+
+## 七、剩余工作（交接清单 · 2026-10-08）
+
+> **已修复并验证（2026-10-04 Docker 实机通过）**：原 NEW-1 ~ NEW-6、Q1 已全部完成。
+> - `650d365` nginx `/api` 剥前缀 + `.dockerignore` + swagger 路径
+> - `4f0916c` 上传相对路径 + JWT_SECRET 外置 `.env`
+> - `041b088` Redis `KEYS` → `SCAN`
+> - `df804e7` PageHelper `1.4.7 → 4.1.1`
+> - `ff41c1f` nginx `client_max_body_size 10m`
+>
+> 数据现状：本地 `game` 1200 / `player_game_stat` 30024 / `shot` 100000；
+> **Docker 全新环境现已自动造数**（`b864b34`，见下方 A 的完成记录）：
+> `down -v && up` 后 season=1 / team=30 / player=39 / game=1200 / stat=**30000** / shot=100000 / user=1。
+> ⚠️ 本地 stat=30024 与 Docker 的 30000 差 24 条是**规格差异，不是丢了数据**：
+> 旧 stats Runner 每场固定「新插 25 条」，8 场种子（已有 24 条）变成每场 28 条；
+> 新逻辑改为「每场补到 25 条」，所以全新环境恰好 30000。本地库未重造，保留旧数字。
+
+### A. ✅ Docker 演示缺数据 —— **已完成**（`b864b34`，2026-10-08 实机验收）
+
+**当时的结论**：方案②的加强版 —— 不 dump 满血库（①会把密码哈希与大 SQL 提交进公开仓库），
+而是新增 `SeedDataRunner`（`--import-seed`，导入 classpath 的 5 个种子 CSV + 创建演示账号 `paulgeorge8`），
+compose 加一次性 `seed` 服务串起 `--import-seed → --generate-stats → --generate-shots`。
+
+**过程中实测推翻了本节 3 处旧假设**（都已修，接手人不必再踩）：
+
+| 旧假设 | 实测 | 处置 |
+|---|---|---|
+| 「两个 Runner 幂等,可安全重跑」 | **都不幂等**：stats 每场只数「本次新插」凑满 25 就停，重跑二跑 30024→46800；shots 每次无条件插 10 万 | stats 改为按场统计已有条数、只补差额；shots 改为补到 10 万 |
+| seed 服务只要 `restart: "no"` 跑完退出 | Runner 跑完 web 容器不退出，seed 永驻 | 命令加 `--spring.main.web-application-type=none`，跑完 JVM 自然退出 |
+| Runner 间顺序无需处理 | Spring 不保证多个 `CommandLineRunner` 顺序，stats 抢在 seed 前会静默跳过 | 显式 `@Order(10/20/30)` |
+| （附带发现）`GameMapper.add` 无需回填主键 | stats Runner 插完比赛立刻用 `game.getId()` 挂 stat，null 直接 `Column 'game_id' cannot be null` | `@Options(useGeneratedKeys=true, keyProperty="id")` |
+
+**验收已达成**：`down -v && up -d --build` 一次成功（seed `Exited (0)`），
+`paulgeorge8` 直接登录，`/rank/points`、`/shot/chart`、`/player-game-stat/summary` 均返回真实数据，
+`nginx /api` 代理路径同步通过；**二次 `up` seed 约 5 秒跳过且所有数字不变**。
+
+<details>
+<summary>以下是 A 项当时的原始问题记录（保留供回溯）</summary>
+
+**问题（2026-10-08 核实）**：`docker compose down -v && up` 之后是 **9 张全空表**：
+- `schema.sql` / `schema-basketball.sql` 都是纯 `CREATE TABLE`，**0 条 INSERT**；
+- 后端**没有任何启动时自动导入 seed 的逻辑**——`resources/seed/*.csv`（teams/players/seasons/games/player_game_stats 5 个）只是躺在 classpath，靠 `/import` 接口手工导；
+- `docker-compose.yml` 的 mysql 只把两个建表脚本挂到 `/docker-entrypoint-initdb.d`，没有数据脚本。
+
+结果：**`user` 表也是空的 → 没有 `paulgeorge8`，登录页都进不去**；即便现场注册一个账号，
+球队/球员/赛季/比赛/热图/雷达/排行榜也全部为空。之前 10-04 记的「种子 CSV 导入 1/30/39/8/24」
+是**手工**调 `/import` 接口导入的，不是 compose 自动做的。
+
+**根因**：数据从三处来，全都不是自动的：
+- 5 个 seed CSV → 靠 `POST /import/{entity}` 手工导；
+- `PlayerGameStatDataGeneratorRunner` → `--generate-stats`（补到 1200 场 + 每场 25 条 stat；幂等，跳过已存在的 `(gameId,playerId)`）
+- `ShotDataGeneratorRunner` → `--generate-shots`（按全量比赛生成投篮点；幂等）
+- 用户账号 → 靠 `POST /user/register` 手工注册（或 SQL 导入）
+- `RankPerfTestRunner` → `--perf-test`（仅性能对比，演示可不用）
+
+Docker 后端 `ENTRYPOINT ["java","-jar","app.jar"]` 没带任何参数，所以上面全都没发生。
+
+**修复（三选一，推荐①）**：
+1. **把本地满血库整个 dump 挂载进 Docker MySQL**（一次解决「数据 + 账号」两个问题，演示零操作）：
+   `mysqldump -uroot -p hoops > big-event/db/init/hoops.sql`，
+   `docker-compose.yml` 的 mysql 服务加 `volumes: - ./big-event/db/init:/docker-entrypoint-initdb.d:ro`。
+   dump 里已含建表语句 + `paulgeorge8` 等用户 + 1200 场/30024 stat/100000 shot，首次 `up`（空数据卷）自动导入。
+   ⚠️ `initdb.d` 只在**空数据卷**首次初始化时执行，改完要 `down -v` 才会重跑。
+2. **compose 加一次性 seed 服务**（`restart: "no"` + `depends_on: backend`），按顺序跑：
+   ① `/import` 导 5 个 CSV ② `--generate-stats` ③ `--generate-shots` ④ **还要导/注册一个用户**（否则仍无法登录）。
+   比①复杂，且 CSV 只有 8 场/24 stat，规模远小于本地满血数据。
+3. **只写文档**：README 写清「演示前按顺序：导入 CSV → 生成数据 → 注册账号」。现场步骤最多、最容易翻车，不推荐用于面试。
+
+**顺序约束**：`--generate-stats` 需要 season/team/player 先存在（否则打印 `missing season/team/player data` 并跳过），
+所以正确顺序是「建表（compose 自动）→ 导入 seed CSV（`/import`）→ `--generate-stats` → `--generate-shots` → 注册/导入用户」。
+
+**验收**：`docker compose down -v && docker compose up -d --build` 后，
+① 能直接用 `paulgeorge8` 登录；② 容器内 `mysql -e "select count(*) from shot"` = 100000、`game` = 1200、`player_game_stat` ≈ 30000；
+③ 浏览器打开热图 / 雷达 / 排行榜均有数据。
+
+</details>
+
+### B. 🟡 测试覆盖过薄，CI 没真正跑测试
+
+**现状**：后端只有 `StatCalculatorTest`（1 个纯函数工具类，约 130 行）；`HoopsApplicationTests.contextLoads` 被 `@Disabled` 跳过；
+`.gitee-ci.yml` 的 `mvn test` 因此没测任何业务逻辑；前端零单测。
+
+**做法**：
+1. 把 `HoopsApplicationTests` 换成真正能跑的集成测试：H2（`MODE=MySQL`）或 Testcontainers MySQL。
+   先验证 MyBatis 的 `LIMIT` / `GROUP BY` / `RANK() OVER` 等方言 SQL 在 H2 下能跑通，跑不通就上 Testcontainers。
+2. 给至少 2 个 Service 写单测（Mockito `@MockBean` 隔离 DB/Redis），推荐：
+   - `PlayerGameStatServiceImpl.summary`（聚合字段映射、seasonId 过滤、命中率除零）
+   - `RankServiceImpl`（缓存命中 / 回源 / 失效）
+3. 修 `.gitee-ci.yml`：跑 `mvn test`，去掉或替换 `@Disabled`，让 CI 红灯/绿灯反映真实结果。
+
+**验收**：`cd big-event && mvn test` 全绿且 `Tests run: N` 有意义；CI 日志可见实际测试通过数。
+（前端组件测试可选，不做不扣分。）
+
+### C. 🟢 遗留 P1/P2 小毛病（详见第二节，位置列已给）
+
+按「改动小 → 安全 → 用户可感知」排序，每组一个 commit：
+
+| 顺序 | 编号 | 一句话 | 位置 |
+|---|---|---|---|
+| 1 | H1/H2/H3 | article/category 分页参数无默认值/边界校验 | 照抄 `TeamController` |
+| 2 | G12 | 改密接口后端不校验长度 | `UserController.updatePassword` |
+| 3 | B8 | 用户名可枚举（「用户名错误/密码错误」提示不同） | `UserController.login` |
+| 4 | D16/D17 | 文章 `categoryId` 未校验归属 | `ArticleMapper`/`ArticleController` |
+| 5 | E16+E13/E14+G6 | 无 logout；改密旧 token 不失效；Redis key 无命名空间（三件套一起做） | `UserController`/`LoginInterceptor` |
+| 6 | H6 | 前端无 404 兜底路由（未知路径白屏） | `router/index.js` |
+| 7 | H7 | REST 语义：业务失败全返回 200+code:1 | `GlobalExceptionHandler` |
+| 8 | F10 | 上传文件永不清理 | `FileUploadController` |
+| 9 | D22/D23 | 分页页码不重置/回退 | `ArticleManage.vue` |
+| 10 | I4 | 「分类ID」列显示数字 | `ArticleManage.vue` |
+| 11 | Q2 | 无 Maven Wrapper | `.gitignore` + 生成 mvnw |
+| 12 | Q13/Q14 | 上传目录随 `user.dir` 漂移 | `WebConfig` + 配置化 |
+
+**每条验收**：对照 `TEST-CHECKLIST.md` 同编号用例，改完跑那条。
+
+### ⚠️ 面试兜底（不改代码，写进 README）
+
+- 数据是程序生成的合成数据；`player_game_stat` 每人 ≈770 场，真实球员一赛季约 82 场，被问需如实说明。
+- README 加「3 分钟演示脚本」：登录 → 排行榜 → 热图 → 雷达，附关键数字（排行榜 P95 200ms→2ms 等）。
