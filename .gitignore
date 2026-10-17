@@ -20,3 +20,7 @@
 # 本地工作/交接文档（不提交进仓库）
 FIX-LIST.md
 AGENT_HANDOFF.md
+
+# 个人简历及输出文件
+resume_output/
+*.docx
