@@ -1,0 +1,85 @@
+%% ============================================================================
+%% 02 · 模块依赖图（只看有证据的边）
+%% 生成：2026-10-31
+%% 依据：docs/reverse-engineering/evidence-index.md
+%% 说明：
+%%   - 不把每个 import 都当架构依赖，只画跨层的实质依赖
+%%   - 标「推断」的边已在 evidence-index.md 中注明未逐行核实
+%% ============================================================================
+flowchart TD
+    subgraph CTRL["controller ×13"]
+        UC["UserController"]
+        RC["RankController"]
+        IC["ImportController"]
+        FC["FileUploadController<br/>（不经 Service）"]
+        OC["其余 9 个 CRUD Controller"]
+    end
+
+    subgraph SVCG["service / service.impl ×12 + ×12"]
+        US["UserService(Impl)"]
+        RS["RankService(Impl)"]
+        IS["ImportService(Impl)"]
+        OS["其余 9 个 Service(Impl)"]
+    end
+
+    subgraph MAPG["mapper ×11（均为接口 + 注解 SQL）"]
+        UM["UserMapper"]
+        RM["RankMapper"]
+        OM["其余 9 个 Mapper"]
+    end
+
+    subgraph CROSS["config / interceptors / utils / exception"]
+        WC["WebConfig"]
+        LI["LoginInterceptor"]
+        JU["JwtUtil"]
+        PE["PasswordEncoder"]
+        TL["ThreadLocalUtil"]
+        GEH["GlobalExceptionHandler"]
+    end
+
+    subgraph POJOG["pojo ×16"]
+        RES["Result"]
+        ENT["实体 / PageBean / RankItem 等"]
+    end
+
+    subgraph INFRA["外部依赖与基础设施"]
+        MYB["mybatis-spring-boot-starter 4.0.1"]
+        DB[("MySQL")]
+        RD[("Redis")]
+        PAGE["pagehelper 4.1.1"]
+        BCRYPT["spring-security-crypto<br/>BCryptPasswordEncoder"]
+    end
+
+    WC -->|"addInterceptors"| LI
+    LI --> JU
+    LI --> TL
+    LI -->|"opsForValue().get"| RD
+
+    UC --> US
+    UC --> JU
+    UC --> PE
+    UC -->|"set / delete token"| RD
+    RC --> RS
+    RS --> RM
+    RS -->|"get / set / scan"| RD
+    IC --> IS
+
+    US --> UM
+    US --> PE
+    US --> TL
+    IS --> OM
+    OC --> OS
+
+    UM --> MYB
+    RM --> MYB
+    OM --> MYB
+    MYB --> DB
+
+    OS -->|"7 个分页 Impl 调 startPage"| PAGE
+
+    PE --> BCRYPT
+    GEH --> RES
+    UC --> RES
+    RC --> RES
+    IC --> RES
+    RES -->|"data 字段"| ENT

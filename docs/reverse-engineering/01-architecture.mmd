@@ -1,0 +1,62 @@
+%% ============================================================================
+%% 01 · 系统架构图（证据驱动）
+%% 项目：big-event-fullstack（Hoops 篮球数据平台）
+%% 生成：2026-10-31
+%% 依据：docs/reverse-engineering/evidence-index.md（每条边均有源码/配置出处）
+%% 说明：只画有证据的组件；未验证项已在 evidence-index.md 的 H 节列出
+%% ============================================================================
+flowchart LR
+    subgraph CLIENT["客户端（Vue 3 SPA）"]
+        UI["views/*.vue<br/>14 个视图文件"]
+        API["api/*.js<br/>10 个模块 · axios"]
+        REQ["utils/request.js<br/>baseURL='/api' · timeout 5s<br/>401 → 清 token + 跳 /login"]
+    end
+
+    subgraph EDGE["接入层（开发/生产二选一）"]
+        VITE["Vite dev server<br/>/api → localhost:8080<br/>rewrite 剥掉 /api<br/>/uploads → 8080"]
+        NGX["nginx 容器<br/>/api/ → backend:8080/（剥前缀）<br/>/uploads/ · /swagger-ui · /v3/api-docs<br/>client_max_body_size 10m"]
+    end
+
+    subgraph APP["Spring Boot 4.0.7 · Java 17 · 单 Maven 模块"]
+        INT["LoginInterceptor<br/>WebConfig 注册<br/>排除 login/register/uploads/error/swagger"]
+        CTL["Controller ×13<br/>user · article · category · team · player<br/>season · game · player-game-stat · rank<br/>shot · shot/chart · import · upload"]
+        SVC["Service 接口 ×12<br/>ServiceImpl ×12"]
+        MAP["Mapper ×11<br/>MyBatis 注解 SQL（无 XML）"]
+        EXC["GlobalExceptionHandler<br/>@RestControllerAdvice"]
+        DOC["springdoc OpenAPI 2.7.0"]
+        UP["/uploads/** 静态资源映射<br/>WebConfig.addResourceHandlers"]
+        UPC["FileUploadController<br/>不经 Service · 直接写 uploads 目录"]
+    end
+
+    subgraph BATCH["启动期任务（CommandLineRunner · 仅带参数运行）"]
+        SEED["SeedDataRunner<br/>--import-seed"]
+        GS["PlayerGameStatDataGeneratorRunner<br/>--generate-stats"]
+        GSH["ShotDataGeneratorRunner<br/>--generate-shots"]
+        PERF["RankPerfTestRunner<br/>--perf-test"]
+    end
+
+    subgraph DATA["数据层"]
+        MYSQL[("MySQL · hoops<br/>9 张表")]
+        REDIS[("Redis<br/>会话 token · TTL 12h<br/>rank:points:* · 10min / 空结果 1min")]
+    end
+
+    UI --> API --> REQ
+    REQ --> VITE
+    REQ -.->|"生产环境"| NGX
+    VITE --> INT
+    NGX --> INT
+    INT -->|"preHandle 放行"| CTL
+    INT -->|"get(token) 校验会话"| REDIS
+    CTL -->|"12 个 Controller（upload 除外）"| SVC
+    SVC --> MAP
+    MAP --> MYSQL
+    SVC -->|"仅 RankServiceImpl 读写"| REDIS
+    CTL -.->|"抛出异常"| EXC
+    CTL -.->|"注解扫描"| DOC
+    UPC -.->|"写入同一目录"| UP
+    NGX -->|"静态文件"| UP
+    SEED --> SVC
+    SEED --> MAP
+    GS --> MAP
+    GSH --> MAP
+    PERF --> SVC
